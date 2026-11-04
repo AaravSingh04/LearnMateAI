@@ -102,6 +102,8 @@ def health_check():
     return {"status": "ok", "app": "LearnMate AI"}
 
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
+if not FRONTEND_DIR.exists() and (PROJECT_ROOT / "public").exists():
+    FRONTEND_DIR = PROJECT_ROOT / "public"
 
 
 
@@ -1837,9 +1839,14 @@ def redirect_admin():
 if FRONTEND_DIR.exists():
     css_dir = FRONTEND_DIR / "css"
     js_dir = FRONTEND_DIR / "js"
-    css_dir.mkdir(parents=True, exist_ok=True)
-    js_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        css_dir.mkdir(parents=True, exist_ok=True)
+        js_dir.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass
 
-    app.mount("/css", StaticFiles(directory=str(css_dir)), name="css")
-    app.mount("/js", StaticFiles(directory=str(js_dir)), name="js")
+    if css_dir.exists():
+        app.mount("/css", StaticFiles(directory=str(css_dir)), name="css")
+    if js_dir.exists():
+        app.mount("/js", StaticFiles(directory=str(js_dir)), name="js")
 

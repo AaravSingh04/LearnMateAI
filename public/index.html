@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyAI LMS — Your AI Learning Companion</title>
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cosmic: {
+              950: '#050720',
+              900: '#080B2F',
+              850: '#0E1138',
+              800: '#151748',
+              700: '#1C1F5C',
+              600: '#27205F',
+            },
+            purple: {
+              400: '#C084FC',
+              500: '#A855F7',
+              600: '#8B5CF6',
+              700: '#7C3AED',
+              800: '#6D28D9',
+              900: '#4C1D95',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="css/styles.css?v=3.0">
+  <!-- Marked.js for notes rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="theme-dark min-h-screen flex flex-col antialiased text-[#F5F3FF]">
+
+  <!-- Top App Bar -->
+  <header class="border-b border-[rgba(139,92,246,0.15)] bg-[#080B2F]/90 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-6 py-3">
+    <div class="max-w-[1600px] mx-auto flex items-center justify-between gap-4">
+      
+      <!-- Logo + Tagline -->
+      <a href="index.html" class="flex items-center space-x-3 shrink-0">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#7C3AED] to-[#A855F7] flex items-center justify-center shadow-lg shadow-purple-600/30">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/></svg>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-base font-bold tracking-tight text-white leading-none">StudyAI LMS</span>
+          <span class="text-[0.65rem] font-medium text-[#C4B5FD] mt-0.5">Your AI Learning Companion</span>
+        </div>
+      </a>
+
+      <!-- Universal Search Bar (Ctrl + K) -->
+      <div class="flex-1 max-w-xl hidden md:block">
+        <div 
+          id="search-trigger-btn"
+          class="flex items-center justify-between px-4 py-2 rounded-xl bg-[#151748]/80 border border-[rgba(139,92,246,0.2)] hover:border-purple-500/50 cursor-pointer transition text-xs text-[#A5B4FC] shadow-inner"
+        >
+          <div class="flex items-center space-x-2.5">
+            <svg class="w-4 h-4 text-[#818CF8]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <span>Search your subjects, notes or ask anything...</span>
+          </div>
+          <kbd class="px-2 py-0.5 rounded bg-[#27205F] text-[0.65rem] font-semibold text-[#DDD6FE] border border-purple-500/30">Ctrl + K</kbd>
+        </div>
+      </div>
+
+      <!-- User Profile & Notifications -->
+      <div class="flex items-center space-x-3 shrink-0">
+        <!-- Notification Bell -->
+        <button 
+          id="notifications-btn"
+          class="relative p-2 rounded-xl bg-[#151748]/80 border border-[rgba(139,92,246,0.2)] hover:bg-[#27205F] text-[#DDD6FE] transition"
+          title="Upcoming Reminders & Deadlines"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          <span id="notif-badge" class="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-rose-500 ring-2 ring-[#080B2F]"></span>
+        </button>
+
+        <!-- User Avatar -->
+        <div class="flex items-center space-x-2.5 pl-1">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-400/40 flex items-center justify-center font-bold text-xs text-white shadow-sm">
+            AS
+          </div>
+          <span class="text-xs font-semibold text-white hidden sm:inline-block">Aarav Singh</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Body Layout: Sidebar + Canvas + Right Widgets -->
+  <div class="max-w-[1600px] w-full mx-auto flex-1 flex px-3 sm:px-6 py-6 gap-6">
+
+    <!-- Left Navigation Sidebar -->
+    <aside class="w-56 shrink-0 hidden lg:flex flex-col justify-between">
+      <nav class="space-y-1.5">
+        <a href="index.html" class="nav-pill active">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="#subjects-section" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          <span>Subjects</span>
+        </a>
+        <a href="notes.html" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>Notes</span>
+        </a>
+        <button id="open-assistant-nav-btn" class="nav-pill w-full justify-between">
+          <div class="flex items-center space-x-3">
+            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+            <span>AI Assistant</span>
+          </div>
+          <span class="px-1.5 py-0.5 rounded text-[0.6rem] font-bold bg-purple-600 text-white uppercase tracking-wider">Voice</span>
+        </button>
+        <a href="quiz.html" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <span>Quiz & Practice</span>
+        </a>
+        <a href="calendar.html" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <span>Calendar</span>
+        </a>
+        <a href="timer.html" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Study Timer</span>
+        </a>
+        <a href="analytics.html" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span>Analytics</span>
+        </a>
+      </nav>
+
+      <!-- Bottom Subtle Glow Artwork -->
+      <div class="p-3 rounded-xl bg-gradient-to-br from-purple-900/30 to-indigo-900/20 border border-purple-500/20 text-center">
+        <span class="text-[0.65rem] font-bold text-[#C4B5FD] uppercase tracking-wider block">StudyAI Enterprise</span>
+        <span class="text-3xs text-[#818CF8]">Offline-First • Local Storage</span>
+      </div>
+    </aside>
+
+    <!-- Center Main Content Canvas -->
+    <main class="flex-1 min-w-0 space-y-6">
+
+      <!-- Hero Welcome Banner (Matching Reference Image) -->
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#171452] via-[#241B66] to-[#341C6E] p-6 sm:p-7 border border-purple-500/30 shadow-xl">
+        <div class="relative z-10 max-w-lg">
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
+            <span>Welcome back, Aarav!</span>
+            <span class="animate-bounce">👋</span>
+          </h1>
+          <p class="text-xs sm:text-sm text-[#DDD6FE] mt-1.5 font-medium leading-relaxed">
+            Continue your learning journey. Review course slides, practice real-time numericals, and ask your AI tutor anytime.
+          </p>
+        </div>
+        <!-- Decorative 3D illustration badge in background -->
+        <div class="absolute right-4 bottom-2 sm:bottom-3 opacity-80 sm:opacity-95 pointer-events-none">
+          <div class="w-32 h-24 sm:w-44 sm:h-32 flex items-center justify-center">
+            <svg class="w-full h-full text-purple-300 drop-shadow-[0_10px_20px_rgba(139,92,246,0.4)]" viewBox="0 0 200 140" fill="none">
+              <!-- Laptop -->
+              <rect x="40" y="30" width="120" height="75" rx="6" fill="#1E1B4B" stroke="#8B5CF6" stroke-width="3"/>
+              <rect x="52" y="40" width="96" height="55" rx="3" fill="#2E1065"/>
+              <path d="M100 50L80 62L100 74L120 62L100 50Z" fill="#C084FC"/>
+              <path d="M20 105H180C183 105 185 108 183 111L170 120H30L17 111C15 108 17 105 20 105Z" fill="#312E81"/>
+              <!-- Books beside -->
+              <rect x="15" y="80" width="22" height="6" rx="2" fill="#F43F5E"/>
+              <rect x="12" y="88" width="28" height="7" rx="2" fill="#F59E0B"/>
+              <rect x="10" y="97" width="32" height="7" rx="2" fill="#10B981"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5 Quick Action Cards (Glassmorphism row) -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <!-- 1. Upload Notes -->
+        <div id="quick-action-upload" class="action-card p-3.5 flex flex-col items-center text-center justify-center space-y-2">
+          <div class="w-9 h-9 rounded-lg bg-indigo-500/20 text-[#A5B4FC] flex items-center justify-center border border-indigo-400/30">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+          </div>
+          <span class="text-xs font-semibold text-[#F5F3FF]">Upload Notes</span>
+        </div>
+
+        <!-- 2. Ask AI -->
+        <div id="quick-action-ask-ai" class="action-card p-3.5 flex flex-col items-center text-center justify-center space-y-2">
+          <div class="w-9 h-9 rounded-lg bg-purple-500/20 text-[#C084FC] flex items-center justify-center border border-purple-400/30">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+          </div>
+          <span class="text-xs font-semibold text-[#F5F3FF]">Ask AI</span>
+        </div>
+
+        <!-- 3. Create Quiz -->
+        <div id="quick-action-quiz" class="action-card p-3.5 flex flex-col items-center text-center justify-center space-y-2">
+          <div class="w-9 h-9 rounded-lg bg-pink-500/20 text-pink-300 flex items-center justify-center border border-pink-400/30">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+          </div>
+          <span class="text-xs font-semibold text-[#F5F3FF]">Create Quiz</span>
+        </div>
+
+        <!-- 4. Study Timer -->
+        <div id="quick-action-timer" class="action-card p-3.5 flex flex-col items-center text-center justify-center space-y-2">
+          <div class="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center border border-emerald-400/30">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <span class="text-xs font-semibold text-[#F5F3FF]">Study Timer</span>
+        </div>
+
+        <!-- 5. Add to Calendar -->
+        <div id="quick-action-calendar" class="action-card p-3.5 flex flex-col items-center text-center justify-center space-y-2 col-span-2 sm:col-span-1">
+          <div class="w-9 h-9 rounded-lg bg-blue-500/20 text-blue-300 flex items-center justify-center border border-blue-400/30">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>
+          <span class="text-xs font-semibold text-[#F5F3FF]">Add to Calendar</span>
+        </div>
+      </div>
+
+      <!-- My Subjects Section -->
+      <section id="subjects-section" class="space-y-3.5 pt-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2.5">
+            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            <h2 class="text-base sm:text-lg font-bold text-white tracking-tight">My Subjects</h2>
+          </div>
+          <button 
+            id="open-add-subject-modal-btn"
+            class="text-xs font-semibold text-purple-400 hover:text-purple-300 flex items-center space-x-1 transition"
+          >
+            <span>+ Add Subject</span>
+          </button>
+        </div>
+
+        <!-- Subjects Grid (Populated dynamically) -->
+        <div id="subjects-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <!-- Dynamic cards injected via app.js -->
+        </div>
+
+        <!-- Empty state fallback if no subjects -->
+        <div id="subjects-empty-state" class="hidden p-8 rounded-xl border border-purple-500/20 bg-[#151748]/50 text-center">
+          <p class="text-sm text-[#A5B4FC]">No subjects registered yet. Click "+ Add Subject" to begin.</p>
+        </div>
+      </section>
+
+            <!-- Active PPT Revision Notes Section -->
+      <section id="active-study-notes-section" class="space-y-3 pt-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <h2 class="text-base font-bold text-white tracking-tight">Active PPT Revision Notes</h2>
+            <span class="text-3xs font-bold px-2 py-0.5 rounded-full bg-purple-600/30 text-purple-300 border border-purple-500/30">Top Ranker Folio</span>
+          </div>
+          <a id="dashboard-view-all-notes-link" href="subject.html?subject_id=3#notes" class="text-xs font-semibold text-purple-400 hover:text-purple-300 flex items-center space-x-1 transition">
+            <span>Open in Academic Reader &rarr;</span>
+          </a>
+        </div>
+
+        <div id="active-study-notes-card" class="dark-card p-5 border border-purple-500/30 bg-gradient-to-br from-[#1E1452] via-[#151748] to-[#120D38] space-y-3.5 shadow-xl">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-purple-500/20 gap-2">
+            <div class="flex items-center space-x-3 min-w-0">
+              <span id="active-notes-file-badge" class="px-2 py-0.5 rounded text-3xs font-bold uppercase tracking-wider bg-purple-600 text-white shrink-0">PPTX</span>
+              <div class="min-w-0">
+                <h4 id="active-notes-deck-title" class="text-sm font-bold text-white truncate">session 1- Introduction.pptx</h4>
+                <p id="active-notes-subject-subtitle" class="text-3xs text-[#A5B4FC] truncate">Economics • Generated Revision Notes</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2 shrink-0">
+              <a id="active-notes-read-btn" href="subject.html?subject_id=3#notes" class="btn-purple-glow px-3 py-1.5 text-xs font-semibold flex items-center space-x-1.5 shadow-sm">
+                <span>📖 Read Complete Notes</span>
+              </a>
+              <a id="active-notes-quiz-btn" href="subject.html?subject_id=3#quiz" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-purple-500/30 bg-[#27205F]/60 text-purple-200 hover:text-white hover:bg-[#27205F] transition">
+                <span>🎯 Practice Quiz</span>
+              </a>
+            </div>
+          </div>
+          <div id="active-notes-preview-content" class="text-xs text-[#DDD6FE] leading-relaxed max-h-40 overflow-hidden relative font-sans">
+            <p class="italic text-slate-400">Syncing textbook revision notes...</p>
+            <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#151748] to-transparent pointer-events-none"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Continue Learning Section -->
+      <section class="space-y-3 pt-2">
+        <div class="flex items-center space-x-2">
+          <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <h2 class="text-base font-bold text-white tracking-tight">Continue Learning</h2>
+        </div>
+
+        <div id="continue-learning-card" class="dark-card p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer hover:border-purple-500 transition">
+          <div class="flex items-center space-x-3.5">
+            <div class="w-11 h-11 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+            <div>
+              <h4 id="continue-topic-title" class="text-sm sm:text-base font-bold text-white">Loading your active topic...</h4>
+              <p id="continue-topic-subtitle" class="text-xs text-[#A5B4FC] mt-0.5">Syncing curriculum...</p>
+            </div>
+          </div>
+          <button class="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shrink-0 hover:scale-105 transition shadow-lg shadow-purple-600/30">
+            <svg class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- AI Study Assistant Banner (Matching Reference Image) -->
+      <section class="rounded-xl bg-gradient-to-r from-[#1E1452] via-[#2D1B68] to-[#1E174D] border border-purple-500/30 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
+        <div class="flex items-center space-x-3.5">
+          <div class="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-300 shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-white">AI Study Assistant</h4>
+            <p class="text-xs text-[#DDD6FE]">Ask doubts, get step-by-step numerical explanations, or create study plans.</p>
+          </div>
+        </div>
+        <button id="banner-ask-ai-btn" class="btn-purple-glow px-4 py-2 text-xs flex items-center space-x-1.5 shrink-0 self-end sm:self-center">
+          <span>Ask AI</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </button>
+      </section>
+
+    </main>
+
+    <!-- Right Column Widgets (Calendar + Sticky Notes + Study Timer) -->
+    <aside class="w-80 shrink-0 hidden xl:flex flex-col space-y-4">
+
+      <!-- 1. Study Calendar Widget (Matching Reference Image) -->
+      <div class="dark-card-flat p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            <div>
+              <h3 class="text-xs font-bold text-white">Study Calendar</h3>
+              <p id="cal-month-title" class="text-3xs text-[#A5B4FC]">November 2026</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-1 text-[#C4B5FD]">
+            <button id="cal-prev-btn" class="p-1 hover:text-white transition">&lt;</button>
+            <button id="cal-next-btn" class="p-1 hover:text-white transition">&gt;</button>
+          </div>
+        </div>
+
+        <!-- Days of week -->
+        <div class="grid grid-cols-7 gap-1 text-center text-[0.62rem] font-bold text-[#818CF8]">
+          <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+        </div>
+
+        <!-- Calendar Days Matrix -->
+        <div id="cal-days-grid" class="grid grid-cols-7 gap-1 text-center">
+          <!-- Injected dynamically via app.js -->
+        </div>
+
+        <!-- Upcoming Milestone Alert below calendar -->
+        <div id="cal-upcoming-alert" class="p-2.5 rounded-lg bg-purple-950/40 border border-purple-500/20 text-3xs text-[#C4B5FD] flex items-center justify-between">
+          <span id="cal-next-event-text">Upcoming: Mid-Term Exam (15 Nov)</span>
+          <button id="cal-add-event-btn" class="text-purple-400 font-bold hover:underline">+ Add</button>
+        </div>
+      </div>
+
+      <!-- 2. Sticky Notes Widget (Matching Reference Image) -->
+      <div class="dark-card-flat p-4 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+            <h3 class="text-xs font-bold text-white">Sticky Notes</h3>
+          </div>
+          <button id="add-sticky-note-btn" class="w-5 h-5 rounded-md bg-purple-600/30 text-purple-300 hover:bg-purple-600 hover:text-white text-xs flex items-center justify-center transition">
+            +
+          </button>
+        </div>
+
+        <!-- Sticky Notes List -->
+        <div id="sticky-notes-container" class="space-y-2">
+          <!-- Injected dynamically via app.js -->
+        </div>
+      </div>
+
+      <!-- 3. Study Timer Widget (Matching Reference Image) -->
+      <div class="dark-card-flat p-4 space-y-3 text-center">
+        <div class="flex items-center justify-between text-left">
+          <div class="flex items-center space-x-2">
+            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <h3 class="text-xs font-bold text-white">Study Timer</h3>
+          </div>
+          <button id="timer-settings-btn" class="text-gray-400 hover:text-white text-xs" title="Timer Settings">⚙️</button>
+        </div>
+
+        <!-- Circular Timer -->
+        <div class="relative w-36 h-36 mx-auto flex items-center justify-center">
+          <svg class="timer-svg w-36 h-36" viewBox="0 0 100 100">
+            <circle class="timer-circle-bg" cx="50" cy="50" r="42" stroke-width="7" fill="none"/>
+            <circle id="timer-progress-ring" class="timer-circle-progress" cx="50" cy="50" r="42" stroke-width="7" fill="none" stroke-dasharray="264" stroke-dashoffset="0"/>
+          </svg>
+          <div class="absolute flex flex-col items-center">
+            <span id="timer-display" class="text-2xl font-extrabold text-white tracking-tight">25:00</span>
+            <span id="timer-label" class="text-3xs font-medium text-[#C4B5FD] uppercase tracking-wider">Focus Time</span>
+          </div>
+        </div>
+
+        <!-- Timer Controls -->
+        <div class="flex items-center justify-center space-x-3 pt-1">
+          <button id="timer-toggle-btn" class="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center hover:scale-105 transition shadow-lg shadow-purple-600/30">
+            <svg id="timer-play-icon" class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="timer-pause-icon" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          </button>
+          <button id="timer-reset-btn" class="p-2 rounded-full bg-[#27205F] text-[#DDD6FE] hover:text-white hover:bg-purple-700 transition" title="Reset Session">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- =========================================================================
+       MODALS & DRAWERS
+       ========================================================================= -->
+
+  <!-- 1. AI Voice & Chat Assistant Drawer -->
+  <div id="ai-assistant-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="dark-card w-full max-w-xl h-[560px] flex flex-col shadow-2xl border border-purple-500/40 animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Drawer Header -->
+      <div class="p-4 border-b border-purple-500/20 flex items-center justify-between bg-[#151748]">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+              <span>StudyAI Voice & Chat Companion</span>
+              <span class="text-3xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">English • Hindi • Hinglish</span>
+            </h3>
+            <p class="text-3xs text-[#DDD6FE]">Ask about concepts, numericals, upcoming exams, or revision targets.</p>
+          </div>
+        </div>
+        <button id="close-assistant-btn" class="text-gray-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <!-- Chat Messages Container -->
+      <div id="assistant-chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs leading-relaxed">
+        <div class="flex items-start space-x-2.5">
+          <div class="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white text-3xs shrink-0 mt-0.5">AI</div>
+          <div class="p-3 rounded-2xl rounded-tl-none bg-[#27205F]/80 border border-purple-500/20 text-[#F5F3FF] max-w-[85%]">
+            Namaste Aarav! 🙏 Main aapka personal StudyAI tutor hoon. Aap mujhse English ya Hinglish mein kuch bhi pooch sakte hain — concepts samjhana ho, numericals solve karna ho ya exam dates dekhna ho.
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Prompt Pills -->
+      <div class="px-4 py-2 border-t border-purple-500/10 flex items-center space-x-2 overflow-x-auto text-3xs">
+        <button class="quick-prompt-btn px-2.5 py-1 rounded-full bg-[#27205F] text-[#DDD6FE] hover:bg-purple-600 hover:text-white transition shrink-0">
+          "What is my next examination?"
+        </button>
+        <button class="quick-prompt-btn px-2.5 py-1 rounded-full bg-[#27205F] text-[#DDD6FE] hover:bg-purple-600 hover:text-white transition shrink-0">
+          "Mujhe Statistics mein Mean samjhao"
+        </button>
+        <button class="quick-prompt-btn px-2.5 py-1 rounded-full bg-[#27205F] text-[#DDD6FE] hover:bg-purple-600 hover:text-white transition shrink-0">
+          "Explain Circular Flow Model"
+        </button>
+      </div>
+
+      <!-- Input Bar with Voice Microphone -->
+      <div class="p-3.5 border-t border-purple-500/20 bg-[#151748] flex items-center space-x-2">
+        <button 
+          id="assistant-mic-btn" 
+          class="w-9 h-9 rounded-full bg-purple-600/30 text-purple-300 hover:bg-purple-600 hover:text-white flex items-center justify-center transition shrink-0"
+          title="Click to Speak (Speech-to-Text)"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"/></svg>
+        </button>
+
+        <input 
+          type="text" 
+          id="assistant-text-input" 
+          placeholder="Ask in English or Hinglish (e.g. Mean samjhao)..." 
+          class="flex-1 px-3.5 py-2 text-xs rounded-xl bg-[#080B2F] border border-purple-500/30 text-white placeholder-purple-300/40 focus:outline-none focus:border-purple-400"
+        >
+
+        <button 
+          id="assistant-send-btn" 
+          class="btn-purple-glow px-3.5 py-2 text-xs font-semibold shrink-0"
+        >
+          Send
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 2. Universal Search Modal (Ctrl + K) -->
+  <div id="search-modal" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-start justify-center pt-20 p-4">
+    <div class="dark-card w-full max-w-xl p-4 shadow-2xl border border-purple-500/40">
+      <div class="flex items-center space-x-2.5 pb-3 border-b border-purple-500/20">
+        <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input 
+          type="text" 
+          id="global-search-input" 
+          placeholder="Search subjects, notes, topics, or formulas..." 
+          class="w-full bg-transparent text-sm text-white focus:outline-none placeholder-purple-300/40"
+        >
+        <button id="close-search-btn" class="text-xs text-gray-400 hover:text-white font-bold">ESC</button>
+      </div>
+      <div id="search-results-list" class="py-3 max-h-80 overflow-y-auto space-y-1.5 text-xs text-[#A5B4FC]">
+        <p class="text-center text-3xs text-[#818CF8] py-4">Type keywords to search across your library.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Add Subject Modal -->
+  <div id="add-subject-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="dark-card w-full max-w-md p-6 shadow-2xl border border-purple-500/40">
+      <div class="flex items-center justify-between pb-3 border-b border-purple-500/20 mb-4">
+        <h3 class="text-base font-bold text-white">Create New Subject</h3>
+        <button id="close-add-subject-btn" class="text-gray-400 hover:text-white text-lg">&times;</button>
+      </div>
+      <form id="add-subject-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-[#DDD6FE] mb-1">Subject Name *</label>
+          <input 
+            type="text" 
+            id="new-subject-name" 
+            required 
+            placeholder="e.g. Business Statistics, Marketing" 
+            class="w-full px-3.5 py-2 text-xs rounded-lg bg-[#080B2F] border border-purple-500/30 text-white focus:outline-none focus:border-purple-400"
+          >
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-[#DDD6FE] mb-1">Description (Optional)</label>
+          <textarea 
+            id="new-subject-desc" 
+            rows="2" 
+            placeholder="Course overview or semester goals..." 
+            class="w-full px-3.5 py-2 text-xs rounded-lg bg-[#080B2F] border border-purple-500/30 text-white focus:outline-none focus:border-purple-400 resize-none"
+          ></textarea>
+        </div>
+        <div id="add-subject-error" class="hidden text-xs text-rose-400"></div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" id="cancel-add-subject-btn" class="btn-dark-outline px-3.5 py-2 text-xs">Cancel</button>
+          <button type="submit" class="btn-purple-glow px-4 py-2 text-xs font-semibold">Create Subject</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. Add Calendar Event Modal -->
+  <div id="add-event-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="dark-card w-full max-w-md p-6 shadow-2xl border border-purple-500/40">
+      <div class="flex items-center justify-between pb-3 border-b border-purple-500/20 mb-4">
+        <h3 class="text-base font-bold text-white">Schedule Exam / Deadline</h3>
+        <button id="close-add-event-btn" class="text-gray-400 hover:text-white text-lg">&times;</button>
+      </div>
+      <form id="add-event-form" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-semibold text-[#DDD6FE] mb-1">Event Title *</label>
+          <input type="text" id="event-title" required placeholder="e.g. Statistics Exam, Marketing Submission" class="w-full px-3.5 py-2 text-xs rounded-lg bg-[#080B2F] border border-purple-500/30 text-white focus:outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-[#DDD6FE] mb-1">Event Type</label>
+            <select id="event-type" class="w-full px-3.5 py-2 text-xs rounded-lg bg-[#080B2F] border border-purple-500/30 text-white focus:outline-none">
+              <option value="exam">Examination</option>
+              <option value="assignment">Assignment Deadline</option>
+              <option value="project">Project Submission</option>
+              <option value="presentation">Presentation</option>
+              <option value="study">Personal Study Target</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-[#DDD6FE] mb-1">Date *</label>
+            <input type="date" id="event-date" required class="w-full px-3.5 py-2 text-xs rounded-lg bg-[#080B2F] border border-purple-500/30 text-white focus:outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-[#DDD6FE] mb-1">Notes / Target Units</label>
+          <input type="text" id="event-notes" placeholder="e.g. Revise Units 1 & 2 thoroughly" class="w-full px-3.5 py-2 text-xs rounded-lg bg-[#080B2F] border border-purple-500/30 text-white focus:outline-none">
+        </div>
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" id="cancel-add-event-btn" class="btn-dark-outline px-3.5 py-2 text-xs">Cancel</button>
+          <button type="submit" class="btn-purple-glow px-4 py-2 text-xs font-semibold">Save to Calendar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. Add Sticky Note Modal -->
+  <div id="add-sticky-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="dark-card w-full max-w-sm p-5 shadow-2xl border border-purple-500/40">
+      <h3 class="text-sm font-bold text-white mb-3">Add Sticky Note</h3>
+      <textarea id="sticky-note-text" rows="3" placeholder="e.g. Revise Unit 2 today..." class="w-full p-3 text-xs rounded-lg bg-[#080B2F] border border-purple-500/30 text-white focus:outline-none resize-none"></textarea>
+      <div class="flex items-center space-x-2 my-3">
+        <span class="text-3xs text-[#A5B4FC]">Color:</span>
+        <button type="button" data-color="yellow" class="sticky-color-pick w-5 h-5 rounded-full bg-yellow-300 ring-2 ring-transparent hover:scale-110"></button>
+        <button type="button" data-color="purple" class="sticky-color-pick w-5 h-5 rounded-full bg-purple-300 ring-2 ring-white hover:scale-110"></button>
+        <button type="button" data-color="cyan" class="sticky-color-pick w-5 h-5 rounded-full bg-cyan-300 ring-2 ring-transparent hover:scale-110"></button>
+        <button type="button" data-color="green" class="sticky-color-pick w-5 h-5 rounded-full bg-emerald-300 ring-2 ring-transparent hover:scale-110"></button>
+      </div>
+      <div class="flex justify-end space-x-2">
+        <button type="button" id="cancel-sticky-btn" class="btn-dark-outline px-3 py-1.5 text-xs">Cancel</button>
+        <button type="button" id="save-sticky-btn" class="btn-purple-glow px-3.5 py-1.5 text-xs font-semibold">Add Note</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Application Script -->
+  <script src="js/app.js?v=3.0"></script>
+</body>
+</html>

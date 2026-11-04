@@ -1,0 +1,59 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "^/api/(.*)$",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "^/css/(.*)$",
+      "dest": "public/css/$1"
+    },
+    {
+      "src": "^/js/(.*)$",
+      "dest": "public/js/$1"
+    },
+    {
+      "src": "^/(index\\.html)?$",
+      "dest": "public/index.html"
+    },
+    {
+      "src": "^/subject(\\.html)?$",
+      "dest": "public/subject.html"
+    },
+    {
+      "src": "^/analytics(\\.html)?$",
+      "dest": "public/analytics.html"
+    },
+    {
+      "src": "^/notes(\\.html)?$",
+      "dest": "public/notes.html"
+    },
+    {
+      "src": "^/timer(\\.html)?$",
+      "dest": "public/timer.html"
+    },
+    {
+      "src": "^/quiz(\\.html)?$",
+      "dest": "public/quiz.html"
+    },
+    {
+      "src": "^/calendar(\\.html)?$",
+      "dest": "public/calendar.html"
+    },
+    {
+      "src": "^/(.*)$",
+      "dest": "api/index.py"
+    }
+  ]
+}

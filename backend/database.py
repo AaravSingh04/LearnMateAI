@@ -4,21 +4,44 @@ Provides connection helpers with foreign key enforcement enabled,
 database initialization, and schema creation for all 5 core tables.
 """
 
+import os
+import shutil
 import sqlite3
 from pathlib import Path
 from typing import Generator
 
 # Resolve paths relative to project root
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = PROJECT_ROOT / "data"
-DB_PATH = DATA_DIR / "learnmate.db"
-UPLOADS_DIR = DATA_DIR / "uploads"
+
+# Detect serverless environment (Vercel, AWS Lambda) where project root is read-only
+IS_SERVERLESS = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+
+if IS_SERVERLESS:
+    DATA_DIR = Path("/tmp/data")
+    DB_PATH = DATA_DIR / "learnmate.db"
+    UPLOADS_DIR = DATA_DIR / "uploads"
+else:
+    DATA_DIR = PROJECT_ROOT / "data"
+    DB_PATH = DATA_DIR / "learnmate.db"
+    UPLOADS_DIR = DATA_DIR / "uploads"
 
 
 def ensure_directories() -> None:
-    """Ensure data/ and data/uploads/ directories exist."""
+    """Ensure data/ and data/uploads/ directories exist and are writable."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def seed_initial_data(conn: sqlite3.Connection) -> None:
+    """Seed initial demo subjects, materials, and study packs if database is empty."""
+    seed_file = PROJECT_ROOT / "data" / "seed_data.sql"
+    if seed_file.exists():
+        try:
+            with open(seed_file, "r", encoding="utf-8") as f:
+                sql_script = f.read()
+            conn.executescript(sql_script)
+        except Exception as e:
+            print(f"Notice: Could not load seed data: {e}")
 
 
 def get_db_connection() -> sqlite3.Connection:
@@ -210,6 +233,13 @@ def init_db() -> None:
                 );
                 """
             )
+
+            # Auto-seed initial subjects and study packs if database is newly initialized
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) AS cnt FROM subjects;")
+            row = cursor.fetchone()
+            if row and row["cnt"] == 0:
+                seed_initial_data(conn)
     finally:
         conn.close()
 

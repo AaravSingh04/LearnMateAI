@@ -1,0 +1,835 @@
+/* ==========================================================================
+   StudyAI LMS — AI Premium Dark & Academic Reading Light Design System
+   Visual Reference: Deep Cosmic Navy (#080B2F), Indigo Glass Surfaces (#171554),
+   Vivid Violet/Purple Glowing Accents (#8B5CF6 / #A855F7), Clean Light Study Reader.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap');
+
+:root {
+  /* AI Premium Dark Palette */
+  --bg-dark-app: #080B2F;
+  --bg-dark-surface: #0E1138;
+  --bg-dark-card: #151748;
+  --bg-dark-card-hover: #1C1F5C;
+  --bg-dark-secondary: #27205F;
+  --border-dark: rgba(139, 92, 246, 0.16);
+  --border-dark-hover: rgba(168, 85, 247, 0.4);
+  --border-dark-glow: #8B5CF6;
+  
+  --primary-purple: #8B5CF6;
+  --primary-purple-hover: #7C3AED;
+  --accent-purple: #A855F7;
+  --accent-cyan: #38BDF8;
+  --accent-emerald: #10B981;
+  --accent-amber: #F59E0B;
+  --accent-rose: #F43F5E;
+  
+  --text-dark-primary: #F5F3FF;
+  --text-dark-secondary: #C4B5FD;
+  --text-dark-muted: #818CF8;
+  --text-dark-subtle: #6366F1;
+
+  /* Clean Academic Reading Light Palette */
+  --bg-light-app: #F8F9FD;
+  --bg-light-surface: #FFFFFF;
+  --bg-light-card: #FFFFFF;
+  --border-light: #E2E8F0;
+  --border-light-hover: #CBD5E1;
+  --border-purple-subtle: rgba(139, 92, 246, 0.25);
+  --text-light-primary: #0F172A;
+  --text-light-secondary: #334155;
+  --text-light-muted: #64748B;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   Common Utilities
+   ========================================================================== */
+
+.font-editorial {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.loader-spin {
+  display: inline-block;
+  width: 1.15rem;
+  height: 1.15rem;
+  border: 2px solid rgba(139, 92, 246, 0.2);
+  border-radius: 50%;
+  border-top-color: #8B5CF6;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background-color: rgba(139, 92, 246, 0.12);
+  color: #8B5CF6;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.pill-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background-color: #8B5CF6;
+}
+
+/* Glowing Primary Button */
+.btn-purple-glow {
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.65rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.btn-purple-glow:hover {
+  background: linear-gradient(135deg, #9333EA 0%, #6D28D9 100%);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-purple-outline {
+  background-color: rgba(139, 92, 246, 0.08);
+  color: #7C3AED;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 0.65rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.btn-purple-outline:hover {
+  background-color: rgba(139, 92, 246, 0.16);
+  border-color: #8B5CF6;
+  color: #6D28D9;
+}
+
+/* ==========================================================================
+   AI Premium Dark Theme (Dashboard)
+   ========================================================================== */
+
+body.theme-dark {
+  background-color: var(--bg-dark-app);
+  color: var(--text-dark-primary);
+  background-image: 
+    radial-gradient(circle at 10% 15%, rgba(139, 92, 246, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 85% 20%, rgba(168, 85, 247, 0.10) 0%, transparent 45%),
+    radial-gradient(circle at 50% 85%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
+  background-attachment: fixed;
+}
+
+/* Dark Glass Cards */
+.dark-card {
+  background-color: var(--bg-dark-card);
+  border: 1px solid var(--border-dark);
+  border-radius: 1rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark-card:hover {
+  border-color: var(--border-dark-hover);
+  box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.16);
+  transform: translateY(-2px);
+}
+
+.dark-card-flat {
+  background-color: var(--bg-dark-card);
+  border: 1px solid var(--border-dark);
+  border-radius: 1rem;
+}
+
+/* Glowing Glass Action Button */
+.action-card {
+  background-color: rgba(21, 23, 72, 0.65);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  border-radius: 0.85rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.action-card:hover {
+  background-color: rgba(39, 32, 95, 0.8);
+  border-color: var(--primary-purple);
+  box-shadow: 0 8px 20px -4px rgba(139, 92, 246, 0.35);
+  transform: translateY(-2px);
+}
+
+.btn-dark-outline {
+  background-color: rgba(21, 23, 72, 0.6);
+  color: var(--text-dark-primary);
+  border: 1px solid var(--border-dark);
+  border-radius: 0.65rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-dark-outline:hover {
+  border-color: var(--primary-purple);
+  background-color: rgba(39, 32, 95, 0.7);
+  color: #FFFFFF;
+}
+
+/* Sidebar Nav Pill */
+.nav-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #A5B4FC;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.nav-pill:hover {
+  color: #FFFFFF;
+  background-color: rgba(139, 92, 246, 0.12);
+}
+
+.nav-pill.active {
+  background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+  color: #FFFFFF;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.45);
+}
+
+/* Sticky Notes Styling */
+.sticky-card {
+  padding: 0.75rem 0.95rem;
+  border-radius: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  transition: all 0.2s ease;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sticky-card:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
+}
+
+.sticky-yellow {
+  background: #FEF08A;
+  color: #1E1B4B;
+  box-shadow: 0 4px 12px rgba(254, 240, 138, 0.2);
+}
+
+.sticky-purple {
+  background: #DDD6FE;
+  color: #2E1065;
+  box-shadow: 0 4px 12px rgba(221, 214, 254, 0.2);
+}
+
+.sticky-cyan {
+  background: #BAE6FD;
+  color: #082F49;
+  box-shadow: 0 4px 12px rgba(186, 230, 253, 0.2);
+}
+
+.sticky-green {
+  background: #BBF7D0;
+  color: #064E3B;
+  box-shadow: 0 4px 12px rgba(187, 247, 208, 0.2);
+}
+
+.sticky-card.completed {
+  opacity: 0.8;
+}
+
+.sticky-card.completed .sticky-text {
+  text-decoration: line-through;
+}
+
+/* Custom Checkbox */
+.custom-chk {
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid currentColor;
+  transition: all 0.15s ease;
+}
+
+.custom-chk.checked {
+  background-color: #6366F1;
+  border-color: #6366F1;
+  color: #FFFFFF;
+}
+
+/* Circular Timer Ring */
+.timer-svg {
+  transform: rotate(-90deg);
+}
+
+.timer-circle-bg {
+  stroke: rgba(139, 92, 246, 0.15);
+}
+
+.timer-circle-progress {
+  stroke: #8B5CF6;
+  transition: stroke-dashoffset 0.5s ease;
+  filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.6));
+}
+
+/* Calendar Mini Widget */
+.cal-cell {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #A5B4FC;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cal-cell:hover:not(.empty) {
+  background-color: rgba(139, 92, 246, 0.2);
+  color: #FFFFFF;
+}
+
+.cal-cell.today {
+  background: #6366F1;
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+.cal-cell.has-exam {
+  background: #E11D48;
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(225, 29, 72, 0.5);
+}
+
+.cal-cell.has-assignment {
+  background: #0284C7;
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.5);
+}
+
+/* Voice Mic Pulse Animation */
+@keyframes mic-wave {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.6); }
+  70% { transform: scale(1.08); box-shadow: 0 0 0 15px rgba(139, 92, 246, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+}
+
+.recording-pulse {
+  animation: mic-wave 1.5s infinite;
+  background: #EF4444 !important;
+}
+
+/* ==========================================================================
+   Clean Academic Reading Light Theme (Subject & Notes Page)
+   ========================================================================== */
+
+body.theme-light {
+  background-color: var(--bg-light-app);
+  color: var(--text-light-primary);
+  background-image: radial-gradient(circle at 90% 10%, rgba(139, 92, 246, 0.05) 0%, transparent 40%);
+}
+
+.light-header {
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.light-card {
+  background-color: var(--bg-light-surface);
+  border: 1px solid var(--border-light);
+  border-radius: 0.85rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
+}
+
+.light-card:hover {
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.light-card-active {
+  border-color: var(--primary-purple);
+  box-shadow: 0 0 0 1px var(--primary-purple), 0 4px 12px rgba(139, 92, 246, 0.1);
+}
+
+/* Tab Navigation Buttons in Light Reader */
+.reader-tab-btn {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--text-light-muted);
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  background: transparent;
+  cursor: pointer;
+}
+
+.reader-tab-btn:hover {
+  color: #1E1B4B;
+}
+
+.reader-tab-btn.active {
+  color: #7C3AED;
+  border-bottom-color: #7C3AED;
+  font-weight: 700;
+}
+
+/* Reading Font Sizing Controls */
+.font-size-sm .markdown-notes { font-size: 0.875rem; line-height: 1.7; }
+.font-size-md .markdown-notes { font-size: 0.975rem; line-height: 1.8; }
+.font-size-lg .markdown-notes { font-size: 1.075rem; line-height: 1.9; }
+
+/* Markdown Notes Reader Typography */
+.markdown-notes {
+  color: #1E293B;
+  transition: font-size 0.2s ease;
+}
+
+.markdown-notes h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 2px solid #E2E8F0;
+}
+
+.markdown-notes h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1E1B4B;
+  margin-top: 1.5rem;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.markdown-notes h3 {
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: #4338CA;
+  margin-top: 1.25rem;
+  margin-bottom: 0.45rem;
+}
+
+.markdown-notes p {
+  margin-bottom: 1rem;
+}
+
+.markdown-notes ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 1.1rem;
+}
+
+.markdown-notes ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1.1rem;
+}
+
+.markdown-notes li {
+  margin-bottom: 0.45rem;
+}
+
+.markdown-notes strong {
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.markdown-notes blockquote {
+  border-left: 4px solid var(--primary-purple);
+  background-color: #F5F3FF;
+  padding: 0.85rem 1.2rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+  margin: 1.25rem 0;
+  color: #4C1D95;
+  font-style: italic;
+}
+
+.markdown-notes code {
+  background-color: #F1F5F9;
+  color: #6B21A8;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.3rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.85em;
+}
+
+.markdown-notes table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+}
+
+.markdown-notes th, .markdown-notes td {
+  border: 1px solid #E2E8F0;
+  padding: 0.65rem 0.9rem;
+  text-align: left;
+}
+
+.markdown-notes th {
+  background-color: #F8FAFC;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+/* Special Educational Callout Cards */
+.callout-purple {
+  background: #F5F3FF;
+  border-left: 4px solid #8B5CF6;
+  border-radius: 0.5rem;
+  padding: 1rem 1.2rem;
+  margin: 1.25rem 0;
+}
+
+.callout-chart {
+  background: #EFF6FF;
+  border-left: 4px solid #3B82F6;
+  border-radius: 0.5rem;
+  padding: 1rem 1.2rem;
+  margin: 1.25rem 0;
+}
+
+.callout-math {
+  background: #F0FDF4;
+  border-left: 4px solid #10B981;
+  border-radius: 0.5rem;
+  padding: 1rem 1.2rem;
+  margin: 1.25rem 0;
+}
+
+/* Quiz Option Card States */
+.quiz-option-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 0.65rem;
+  border: 1.5px solid var(--border-light);
+  background-color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quiz-option-label:hover {
+  border-color: #CBD5E1;
+  background-color: #F8FAFC;
+}
+
+.quiz-option-label.result-correct {
+  border-color: #10B981 !important;
+  background-color: #F0FDF4 !important;
+  color: #064E3B !important;
+}
+
+.quiz-option-label.result-incorrect {
+  border-color: #F43F5E !important;
+  background-color: #FFF1F2 !important;
+  color: #881337 !important;
+}
+
+.badge-choice-correct {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background-color: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #86EFAC;
+}
+
+.badge-choice-incorrect {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background-color: #FFE4E6;
+  color: #BE123C;
+  border: 1px solid #FECDD3;
+}
+
+/* Topic Pills */
+.topic-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--border-light);
+  background-color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-size: 0.825rem;
+  font-weight: 500;
+}
+
+.topic-item:hover {
+  border-color: var(--primary-purple);
+  background-color: #F5F3FF;
+  transform: translateX(2px);
+}
+
+.topic-item.active {
+  border-color: var(--primary-purple);
+  background: #F5F3FF;
+  color: #6D28D9;
+  font-weight: 600;
+}
+
+/* Material Inventory Card */
+.mat-item-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--border-light);
+  background-color: #FFFFFF;
+  transition: all 0.18s ease;
+  cursor: pointer;
+}
+
+.mat-item-card:hover {
+  border-color: var(--primary-purple);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.08);
+}
+
+.mat-item-card.active {
+  border-color: var(--primary-purple);
+  background-color: #FAF5FF;
+  box-shadow: 0 0 0 1px var(--primary-purple);
+}
+
+/* Search Highlight */
+mark.search-highlight {
+  background-color: #FDE047;
+  color: #1E1B4B;
+  padding: 0 0.2rem;
+  border-radius: 0.2rem;
+}
+
+/* Toast container */
+#toast-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 24rem;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  padding: 0.85rem 1.2rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  animation: slideToast 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideToast {
+  from { opacity: 0; transform: translateY(1rem) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.6);
+}
+
+/* ==========================================================================
+   Dedicated Calendar Page Styles
+   ========================================================================== */
+.cal-day-cell {
+  min-height: 105px;
+  background-color: rgba(21, 23, 72, 0.5);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 0.75rem;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.18s ease;
+  cursor: pointer;
+}
+
+.cal-day-cell:hover {
+  background-color: rgba(39, 32, 95, 0.7);
+  border-color: rgba(168, 85, 247, 0.5);
+  transform: translateY(-1px);
+}
+
+.cal-day-cell.is-today {
+  border-color: #8B5CF6;
+  background-color: rgba(139, 92, 246, 0.15);
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.35);
+}
+
+.cal-day-cell.other-month {
+  opacity: 0.35;
+}
+
+.event-pill {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.35rem;
+  margin-top: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-pill-exam {
+  background-color: rgba(225, 29, 72, 0.25);
+  color: #FDA4AF;
+  border: 1px solid rgba(225, 29, 72, 0.45);
+}
+
+.event-pill-assignment {
+  background-color: rgba(2, 132, 199, 0.25);
+  color: #7DD3FC;
+  border: 1px solid rgba(2, 132, 199, 0.45);
+}
+
+.event-pill-project {
+  background-color: rgba(217, 119, 6, 0.25);
+  color: #FCD34D;
+  border: 1px solid rgba(217, 119, 6, 0.45);
+}
+
+.event-pill-study {
+  background-color: rgba(16, 185, 129, 0.25);
+  color: #6EE7B7;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+}
+
+.event-pill-presentation {
+  background-color: rgba(139, 92, 246, 0.25);
+  color: #C4B5FD;
+  border: 1px solid rgba(139, 92, 246, 0.45);
+}
+
+/* ==========================================================================
+   Compact Upload Strip
+   ========================================================================== */
+.compact-upload-strip {
+  border: 1.5px dashed rgba(139, 92, 246, 0.3);
+  border-radius: 0.75rem;
+  padding: 0.65rem 1rem;
+  background-color: rgba(248, 250, 252, 0.8);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.compact-upload-strip:hover {
+  border-color: #8B5CF6;
+  background-color: rgba(245, 243, 255, 0.85);
+}
+
+/* ==========================================================================
+   Print / Export PDF Optimization
+   ========================================================================== */
+@media print {
+  body.theme-light {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+  }
+
+  header, .print-hide, #drop-zone, #upload-form, #retake-quiz-btn, #toast-container, button {
+    display: none !important;
+  }
+
+  .markdown-notes {
+    font-size: 11pt !important;
+    line-height: 1.6 !important;
+  }
+
+  .light-card {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+}

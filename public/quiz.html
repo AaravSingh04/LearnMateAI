@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz & Practice Hub — StudyAI LMS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cosmic: {
+              950: '#050720',
+              900: '#080B2F',
+              850: '#0E1138',
+              800: '#151748',
+              700: '#1C1F5C',
+              600: '#27205F',
+            },
+            purple: {
+              400: '#C084FC',
+              500: '#A855F7',
+              600: '#8B5CF6',
+              700: '#7C3AED',
+              800: '#6D28D9',
+              900: '#4C1D95',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="css/styles.css?v=3.2">
+</head>
+<body class="theme-dark min-h-screen flex flex-col antialiased text-[#F5F3FF]">
+
+  <!-- Top App Bar -->
+  <header class="border-b border-[rgba(139,92,246,0.15)] bg-[#080B2F]/90 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-6 py-3">
+    <div class="max-w-[1600px] mx-auto flex items-center justify-between gap-4">
+      
+      <a href="index.html" class="flex items-center space-x-3 shrink-0">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#7C3AED] to-[#A855F7] flex items-center justify-center shadow-lg shadow-purple-600/30">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/></svg>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-base font-bold tracking-tight text-white leading-none">StudyAI LMS</span>
+          <span class="text-[0.65rem] font-medium text-[#C4B5FD] mt-0.5">Interactive Examination & Practice Hub</span>
+        </div>
+      </a>
+
+      <div class="flex items-center space-x-3">
+        <a href="index.html" class="btn-dark-outline px-3 py-1.5 text-xs font-semibold">
+          Dashboard
+        </a>
+        <div class="flex items-center space-x-2 pl-2">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-400/40 flex items-center justify-center font-bold text-xs text-white">
+            AS
+          </div>
+          <span class="text-xs font-semibold text-white hidden sm:inline-block">Aarav Singh</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Body Layout -->
+  <div class="max-w-[1600px] w-full mx-auto flex-1 flex px-3 sm:px-6 py-6 gap-6">
+
+    <!-- Left Navigation Sidebar -->
+    <aside class="w-56 shrink-0 hidden lg:flex flex-col justify-between">
+      <nav class="space-y-1.5">
+        <a href="index.html" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="index.html#subjects-section" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          <span>Subjects</span>
+        </a>
+        <a href="notes.html" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>Notes</span>
+        </a>
+        <button id="open-assistant-nav-btn" class="nav-pill w-full justify-between">
+          <div class="flex items-center space-x-3">
+            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+            <span>AI Assistant</span>
+          </div>
+          <span class="px-1.5 py-0.5 rounded text-[0.6rem] font-bold bg-purple-600 text-white uppercase tracking-wider">Voice</span>
+        </button>
+        <a href="quiz.html" class="nav-pill active">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <span>Quiz & Practice</span>
+        </a>
+        <a href="calendar.html" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <span>Calendar</span>
+        </a>
+        <a href="timer.html" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Study Timer</span>
+        </a>
+        <a href="analytics.html" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span>Analytics</span>
+        </a>
+      </nav>
+
+      <div class="p-3 rounded-xl bg-purple-950/30 border border-purple-500/20 text-center">
+        <span class="text-[0.65rem] font-bold text-[#C4B5FD] uppercase tracking-wider block">Server Evaluation</span>
+        <span class="text-3xs text-[#818CF8]">Comprehensive Explanations</span>
+      </div>
+    </aside>
+
+    <!-- Main Quiz Canvas -->
+    <main class="flex-1 min-w-0 space-y-6">
+
+      <!-- Subject & Material Selector Card -->
+      <div class="dark-card p-5 border border-purple-500/30 bg-[#151748]">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <span class="text-3xs font-bold uppercase tracking-wider text-purple-400 block mb-0.5">Knowledge Assessment</span>
+            <h1 class="text-xl sm:text-2xl font-bold text-white tracking-tight">Interactive Practice Quiz</h1>
+            <p class="text-xs text-[#DDD6FE] mt-0.5">Select your course and lecture material below to practice questions evaluated with 3-part pedagogical breakdowns.</p>
+          </div>
+
+          <!-- Selectors -->
+          <div class="flex flex-wrap items-center gap-2.5">
+            <div>
+              <label class="block text-3xs text-[#A5B4FC] font-semibold mb-1">Subject</label>
+              <select id="quiz-subject-select" class="px-3 py-1.5 text-xs rounded-lg bg-[#080B2F] border border-purple-500/30 text-white focus:outline-none focus:border-purple-400">
+                <option value="">Loading subjects...</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-3xs text-[#A5B4FC] font-semibold mb-1">Lecture Deck</label>
+              <select id="quiz-material-select" class="px-3 py-1.5 text-xs rounded-lg bg-[#080B2F] border border-purple-500/30 text-white focus:outline-none focus:border-purple-400">
+                <option value="">Select deck...</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quiz Workspace Container -->
+      <div id="quiz-container" class="space-y-6">
+        
+        <!-- Empty / Prompt State -->
+        <div id="quiz-empty-state" class="p-12 text-center rounded-2xl bg-[#151748]/50 border border-purple-500/20">
+          <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-purple-600/20 text-purple-400 flex items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <h3 class="text-base font-bold text-white">Select a Lecture Deck to Begin Practice</h3>
+          <p class="text-xs text-[#A5B4FC] max-w-sm mx-auto mt-1">Questions are generated from the key concepts, slide points, and numericals of the uploaded lecture deck.</p>
+        </div>
+
+        <!-- Graded Results Summary Card (Hidden until submitted) -->
+        <div id="quiz-summary-card" class="hidden p-5 rounded-2xl border border-purple-500/40 bg-gradient-to-r from-[#171452] via-[#271E66] to-[#1E174D] space-y-3 shadow-xl">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center space-x-3.5">
+              <div id="quiz-score-circle" class="w-14 h-14 rounded-full flex items-center justify-center font-extrabold text-lg bg-purple-600 text-white shadow-lg shrink-0">
+                --%
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h4 id="quiz-performance-title" class="text-base font-bold text-white">Quiz Completed</h4>
+                  <span id="quiz-grade-pill" class="text-3xs font-bold px-2 py-0.5 rounded-full bg-purple-600 text-white uppercase">Evaluated</span>
+                </div>
+                <p id="quiz-performance-subtitle" class="text-xs text-[#DDD6FE] mt-0.5">Review the 3-part conceptual breakdown below for every correct and incorrect answer.</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2 shrink-0">
+              <button type="button" id="retake-quiz-btn" class="btn-purple-glow px-4 py-2 text-xs font-semibold flex items-center space-x-1.5 shadow-sm">
+                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span>Retake Quiz</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Review Filter Pills -->
+          <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-purple-500/20 text-xs">
+            <span class="text-3xs font-bold text-[#C4B5FD] uppercase tracking-wider mr-1">Filter Breakdown:</span>
+            <button type="button" id="filter-all-btn" class="px-2.5 py-1 rounded-md font-semibold bg-purple-600 text-white text-xs transition">
+              All Questions (<span id="count-all-q">0</span>)
+            </button>
+            <button type="button" id="filter-wrong-btn" class="px-2.5 py-1 rounded-md font-semibold bg-[#151748] border border-purple-500/30 text-rose-300 hover:border-rose-400 text-xs transition">
+              Incorrect Only (<span id="count-wrong-q">0</span>)
+            </button>
+            <button type="button" id="filter-correct-btn" class="px-2.5 py-1 rounded-md font-semibold bg-[#151748] border border-purple-500/30 text-emerald-300 hover:border-emerald-400 text-xs transition">
+              Correct Only (<span id="count-correct-q">0</span>)
+            </button>
+          </div>
+        </div>
+
+        <!-- Active Quiz Form -->
+        <form id="quiz-form" class="hidden space-y-6">
+          <div id="quiz-questions-container" class="space-y-5">
+            <!-- Populated via quiz.js -->
+          </div>
+
+          <div id="quiz-error" class="hidden p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-xs text-rose-300"></div>
+
+          <div class="pt-4 border-t border-purple-500/20 flex items-center justify-end">
+            <button 
+              type="submit" 
+              id="submit-quiz-btn"
+              class="btn-purple-glow px-6 py-2.5 text-xs font-semibold shadow-lg flex items-center space-x-2"
+            >
+              <span id="quiz-submit-spinner" class="hidden loader-spin !w-3.5 !h-3.5 !border-white !border-t-transparent"></span>
+              <span id="quiz-submit-text">Submit for Evaluation</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Past Attempts History for this material -->
+        <div id="quiz-history-section" class="hidden dark-card p-5 border border-purple-500/20 bg-[#151748]/60 space-y-3">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-[#A5B4FC]">Past Quiz Attempts Record</h4>
+          <div id="history-container" class="space-y-2"></div>
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Past Quiz Attempt Review Modal -->
+  <div id="attempt-review-modal" class="fixed inset-0 z-50 hidden bg-black/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
+    <div class="dark-card w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl border border-purple-500/40 bg-[#0E1138]">
+      
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-purple-500/20 flex items-center justify-between bg-[#151748]">
+        <div class="flex items-center space-x-3">
+          <div id="modal-score-badge" class="w-12 h-12 rounded-xl flex items-center justify-center font-extrabold text-sm bg-purple-600 text-white shadow-md shrink-0">
+            --%
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h3 id="modal-review-title" class="text-base font-bold text-white">Quiz Attempt Review</h3>
+              <span id="modal-grade-pill" class="text-3xs font-bold px-2 py-0.5 rounded-full bg-purple-600 text-white uppercase">Graded</span>
+            </div>
+            <p id="modal-review-subtitle" class="text-xs text-[#DDD6FE] mt-0.5">Attempted on --</p>
+          </div>
+        </div>
+        <button id="close-attempt-modal-btn" class="text-gray-400 hover:text-white text-2xl font-bold leading-none p-1">&times;</button>
+      </div>
+
+      <!-- Filter Pills Bar -->
+      <div class="px-5 py-2.5 bg-[#080B2F] border-b border-purple-500/20 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center space-x-2">
+          <span class="text-3xs font-bold text-[#A5B4FC] uppercase tracking-wider">Filter Questions:</span>
+          <button type="button" id="modal-filter-all" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-purple-600 text-white transition">
+            All (<span id="modal-count-all">0</span>)
+          </button>
+          <button type="button" id="modal-filter-wrong" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-[#151748] text-rose-300 border border-purple-500/30 hover:border-rose-400 transition">
+            Incorrect (<span id="modal-count-wrong">0</span>)
+          </button>
+          <button type="button" id="modal-filter-correct" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-[#151748] text-emerald-300 border border-purple-500/30 hover:border-emerald-400 transition">
+            Correct (<span id="modal-count-correct">0</span>)
+          </button>
+        </div>
+        <div class="text-3xs text-[#C4B5FD] italic">
+          Complete answer comparison & theory explanations
+        </div>
+      </div>
+
+      <!-- Question List Body -->
+      <div id="modal-questions-list" class="flex-1 p-5 overflow-y-auto space-y-4">
+        <!-- Injected dynamically -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3.5 border-t border-purple-500/20 bg-[#151748] flex items-center justify-between">
+        <span class="text-3xs text-[#A5B4FC]">Evaluated with detailed conceptual breakdowns.</span>
+        <button type="button" id="modal-done-btn" class="btn-purple-glow px-4 py-2 text-xs font-semibold">
+          Close Review
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- AI Assistant Drawer -->
+  <div id="ai-assistant-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="dark-card w-full max-w-xl h-[560px] flex flex-col shadow-2xl border border-purple-500/40">
+      <div class="p-4 border-b border-purple-500/20 flex items-center justify-between bg-[#151748]">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">StudyAI Companion</h3>
+            <p class="text-3xs text-[#DDD6FE]">Ask about quiz questions, misconceptions, or formulas.</p>
+          </div>
+        </div>
+        <button id="close-assistant-btn" class="text-gray-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+      <div id="assistant-chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs leading-relaxed">
+        <div class="flex items-start space-x-2.5">
+          <div class="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white text-3xs shrink-0 mt-0.5">AI</div>
+          <div class="p-3 rounded-2xl rounded-tl-none bg-[#27205F]/80 border border-purple-500/20 text-[#F5F3FF] max-w-[85%]">
+            Namaste Aarav! 🙏 Practice quiz ke kisi bhi question mein doubt ho toh mujhe bataiye, main step-by-step Hindi ya English mein explain kar dunga.
+          </div>
+        </div>
+      </div>
+      <div class="p-3.5 border-t border-purple-500/20 bg-[#151748] flex items-center space-x-2">
+        <button id="assistant-mic-btn" class="w-9 h-9 rounded-full bg-purple-600/30 text-purple-300 hover:bg-purple-600 hover:text-white flex items-center justify-center transition shrink-0" title="Click to Speak (Speech-to-Text)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"/></svg>
+        </button>
+        <input type="text" id="assistant-text-input" placeholder="Ask in English or Hinglish..." class="flex-1 px-3.5 py-2 text-xs rounded-xl bg-[#080B2F] border border-purple-500/30 text-white placeholder-purple-300/40 focus:outline-none focus:border-purple-400">
+        <button id="assistant-send-btn" class="btn-purple-glow px-3.5 py-2 text-xs font-semibold shrink-0">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+  <script src="js/quiz.js?v=3.2"></script>
+</body>
+</html>
