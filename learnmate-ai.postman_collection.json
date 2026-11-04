@@ -1,0 +1,271 @@
+{
+  "info": {
+    "_postman_id": "7f8b9a23-4567-4e89-b123-learnmateai001",
+    "name": "LearnMate AI API Collection",
+    "description": "Comprehensive API testing collection for LearnMate AI: Personal Learning Hub. Covers subjects, materials, study pack generation, quizzes, and live dashboard stats.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "subject_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "material_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/dashboard/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "dashboard", "stats"]
+            },
+            "description": "Returns live database counts for total subjects, materials, study packs, and quiz attempts."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Subjects",
+      "item": [
+        {
+          "name": "List All Subjects",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/subjects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subjects"]
+            },
+            "description": "Returns all subjects ordered alphabetically with material counts."
+          }
+        },
+        {
+          "name": "Create Subject",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Marketing Management\",\n  \"description\": \"Core concepts of marketing, branding, and customer segmentation.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/subjects",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subjects"]
+            },
+            "description": "Creates a new subject. Rejects blank names or duplicate names."
+          }
+        },
+        {
+          "name": "Get Subject by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/subjects/{{subject_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subjects", "{{subject_id}}"]
+            },
+            "description": "Retrieves one subject or returns 404."
+          }
+        },
+        {
+          "name": "Update Subject",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Marketing Strategy & Operations\",\n  \"description\": \"Updated course focus for the semester.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/subjects/{{subject_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subjects", "{{subject_id}}"]
+            },
+            "description": "Updates name and/or description of an existing subject."
+          }
+        },
+        {
+          "name": "Delete Subject",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/subjects/{{subject_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subjects", "{{subject_id}}"]
+            },
+            "description": "Deletes the subject and cascade-deletes its materials, study packs, quiz records, and physical files."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Materials",
+      "item": [
+        {
+          "name": "Upload Material",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/subjects/{{subject_id}}/materials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subjects", "{{subject_id}}", "materials"]
+            },
+            "description": "Uploads a .pdf or .pptx file for a subject, extracts text, stores the file safely, and returns metadata."
+          }
+        },
+        {
+          "name": "List Subject Materials",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/subjects/{{subject_id}}/materials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "subjects", "{{subject_id}}", "materials"]
+            },
+            "description": "Lists all uploaded materials belonging strictly to this subject, newest first."
+          }
+        },
+        {
+          "name": "Get Material Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/materials/{{material_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "materials", "{{material_id}}"]
+            },
+            "description": "Retrieves metadata and processing status of a single material."
+          }
+        },
+        {
+          "name": "Delete Material",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/materials/{{material_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "materials", "{{material_id}}"]
+            },
+            "description": "Deletes the material, its study pack, questions, attempts, and disk file."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Study Packs",
+      "item": [
+        {
+          "name": "Generate Study Pack",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/materials/{{material_id}}/generate-study-pack",
+              "host": ["{{base_url}}"],
+              "path": ["api", "materials", "{{material_id}}", "generate-study-pack"]
+            },
+            "description": "Calls backend Google Gemini AI to analyze extracted text and generate summary, concepts, notes, and quiz."
+          }
+        },
+        {
+          "name": "Get Study Pack",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/materials/{{material_id}}/study-pack",
+              "host": ["{{base_url}}"],
+              "path": ["api", "materials", "{{material_id}}", "study-pack"]
+            },
+            "description": "Retrieves the saved study pack and questions for a material or 404 if not generated yet."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Quizzes",
+      "item": [
+        {
+          "name": "Submit Quiz Attempt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [\n    {\n      \"question_id\": 1,\n      \"selected_option_index\": 0\n    },\n    {\n      \"question_id\": 2,\n      \"selected_option_index\": 2\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/materials/{{material_id}}/quiz-attempts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "materials", "{{material_id}}", "quiz-attempts"]
+            },
+            "description": "Submits answers. Server grades score against stored answers, logs attempt in DB, and returns breakdown."
+          }
+        },
+        {
+          "name": "List Quiz Attempts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/materials/{{material_id}}/quiz-attempts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "materials", "{{material_id}}", "quiz-attempts"]
+            },
+            "description": "Returns history of past quiz attempts for this material, newest first."
+          }
+        }
+      ]
+    }
+  ]
+}

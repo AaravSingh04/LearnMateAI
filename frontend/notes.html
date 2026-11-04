@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notes Hub — StudyAI LMS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cosmic: {
+              950: '#050720',
+              900: '#080B2F',
+              850: '#0E1138',
+              800: '#151748',
+              700: '#1C1F5C',
+              600: '#27205F',
+            },
+            purple: {
+              400: '#C084FC',
+              500: '#A855F7',
+              600: '#8B5CF6',
+              700: '#7C3AED',
+              800: '#6D28D9',
+              900: '#4C1D95',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="css/styles.css?v=3.2">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="theme-dark min-h-screen flex flex-col antialiased text-[#F5F3FF]">
+
+  <!-- Top App Bar -->
+  <header class="border-b border-[rgba(139,92,246,0.15)] bg-[#080B2F]/90 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-6 py-3 print-hide">
+    <div class="max-w-[1600px] mx-auto flex items-center justify-between gap-4">
+      
+      <!-- Brand & Title -->
+      <a href="index.html" class="flex items-center space-x-3 shrink-0">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#7C3AED] to-[#A855F7] flex items-center justify-center shadow-lg shadow-purple-600/30">
+          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/></svg>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-base font-bold tracking-tight text-white leading-none">StudyAI LMS</span>
+          <span class="text-[0.65rem] font-medium text-[#C4B5FD] mt-0.5">3-Level Academic Notes Hub</span>
+        </div>
+      </a>
+
+      <!-- Breadcrumbs -->
+      <div class="hidden sm:flex items-center space-x-2 text-xs font-semibold text-[#DDD6FE]">
+        <button id="breadcrumb-level-1" class="hover:text-white transition">Notes Hub</button>
+        <span id="breadcrumb-sep-1" class="text-gray-500 hidden">&gt;</span>
+        <button id="breadcrumb-level-2" class="hover:text-white transition hidden"></button>
+        <span id="breadcrumb-sep-2" class="text-gray-500 hidden">&gt;</span>
+        <span id="breadcrumb-level-3" class="text-purple-300 hidden"></span>
+      </div>
+
+      <!-- User Profile -->
+      <div class="flex items-center space-x-3">
+        <a href="index.html" class="btn-dark-outline px-3 py-1.5 text-xs font-semibold">
+          Dashboard
+        </a>
+        <div class="flex items-center space-x-2 pl-2">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-400/40 flex items-center justify-center font-bold text-xs text-white">
+            AS
+          </div>
+          <span class="text-xs font-semibold text-white hidden sm:inline-block">Aarav Singh</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Body Layout -->
+  <div class="max-w-[1600px] w-full mx-auto flex-1 flex px-3 sm:px-6 py-6 gap-6">
+
+    <!-- Left Navigation Sidebar -->
+    <aside class="w-56 shrink-0 hidden lg:flex flex-col justify-between print-hide">
+      <nav class="space-y-1.5">
+        <a href="index.html" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="index.html#subjects-section" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          <span>Subjects</span>
+        </a>
+        <a href="notes.html" class="nav-pill active">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>Notes</span>
+        </a>
+        <button id="open-assistant-nav-btn" class="nav-pill w-full justify-between">
+          <div class="flex items-center space-x-3">
+            <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+            <span>AI Assistant</span>
+          </div>
+          <span class="px-1.5 py-0.5 rounded text-[0.6rem] font-bold bg-purple-600 text-white uppercase tracking-wider">Voice</span>
+        </button>
+        <a href="quiz.html" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          <span>Quiz & Practice</span>
+        </a>
+        <a href="calendar.html" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <span>Calendar</span>
+        </a>
+        <a href="timer.html" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>Study Timer</span>
+        </a>
+        <a href="analytics.html" class="nav-pill">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span>Analytics</span>
+        </a>
+      </nav>
+
+      <div class="p-3 rounded-xl bg-purple-950/30 border border-purple-500/20 text-center">
+        <span class="text-[0.65rem] font-bold text-[#C4B5FD] uppercase tracking-wider block">Structured Notes</span>
+        <span class="text-3xs text-[#818CF8]">Slide-by-Slide & Concepts</span>
+      </div>
+    </aside>
+
+    <!-- Main Content Canvas: 3 Levels -->
+    <main class="flex-1 min-w-0">
+
+      <!-- =====================================================================
+           LEVEL 1: ALL ENROLLED SUBJECTS
+           ===================================================================== -->
+      <section id="notes-level-1-subjects" class="space-y-5">
+        <div class="flex items-center justify-between pb-2 border-b border-purple-500/20">
+          <div>
+            <span class="text-3xs font-bold uppercase tracking-wider text-purple-400">Level 1 • Select Subject</span>
+            <h2 class="text-xl sm:text-2xl font-bold text-white tracking-tight">Your Enrolled Subjects</h2>
+            <p class="text-xs text-[#DDD6FE] mt-0.5">Select a subject below to view its curriculum topics and lecture slide notes.</p>
+          </div>
+          <a href="index.html" class="btn-purple-glow px-3.5 py-2 text-xs font-semibold flex items-center space-x-1.5">
+            <span>+ Add Subject</span>
+          </a>
+        </div>
+
+        <div id="subjects-list-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Dynamically populated from actual subjects in database -->
+        </div>
+
+        <div id="no-subjects-view" class="hidden p-12 text-center rounded-2xl bg-[#151748]/50 border border-purple-500/20">
+          <p class="text-sm text-[#A5B4FC]">No subjects registered yet. Create a subject on the dashboard to start viewing notes.</p>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           LEVEL 2: SUBJECT CURRICULUM TOPICS & LECTURE SESSIONS
+           ===================================================================== -->
+      <section id="notes-level-2-topics" class="hidden space-y-5">
+        
+        <!-- Subject Banner Header -->
+        <div class="dark-card p-5 border border-purple-500/30 bg-[#151748] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <button id="back-to-subjects-btn" class="inline-flex items-center space-x-1 text-xs font-semibold text-purple-300 hover:text-white mb-2 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+              <span>Back to All Subjects</span>
+            </button>
+            <div class="flex items-center space-x-2">
+              <span class="pill-badge !text-3xs">Subject Overview</span>
+              <span id="level2-subject-badge" class="text-xs text-[#A5B4FC] font-medium"></span>
+            </div>
+            <h2 id="level2-subject-title" class="text-2xl font-bold text-white tracking-tight mt-1">Economics</h2>
+            <p id="level2-subject-desc" class="text-xs text-[#DDD6FE] mt-1 max-w-2xl leading-relaxed"></p>
+          </div>
+
+          <div class="shrink-0 flex items-center space-x-2">
+            <a id="level2-workspace-link" href="#" class="btn-purple-glow px-4 py-2 text-xs font-semibold flex items-center space-x-1.5">
+              <span>Upload / Workspace</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Topics & Sessions Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          <!-- Left Column: Identified Topics List -->
+          <div class="lg:col-span-7 space-y-3">
+            <div class="flex items-center justify-between pb-1">
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <span>Identified Curriculum Topics</span>
+                <span id="level2-topics-count" class="px-2 py-0.5 rounded-full bg-purple-600 text-white text-3xs font-bold">0</span>
+              </h3>
+              <span class="text-3xs text-purple-300">Click a topic to read full notes</span>
+            </div>
+
+            <div id="level2-topics-list" class="space-y-2.5">
+              <!-- Rendered topic cards -->
+            </div>
+          </div>
+
+          <!-- Right Column: Uploaded Sessions & Materials -->
+          <div class="lg:col-span-5 space-y-3">
+            <div class="flex items-center justify-between pb-1">
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <span>Lecture Decks & Sessions</span>
+                <span id="level2-materials-count" class="px-2 py-0.5 rounded-full bg-indigo-600 text-white text-3xs font-bold">0</span>
+              </h3>
+            </div>
+
+            <div id="level2-materials-list" class="space-y-2.5">
+              <!-- Rendered materials cards -->
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- =====================================================================
+           LEVEL 3: COMPLETE TOPIC NOTES (Academic Reading Interface)
+           ===================================================================== -->
+      <section id="notes-level-3-reading" class="hidden space-y-5">
+        
+        <!-- Reading Header Bar -->
+        <div class="dark-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 print-hide">
+          <div>
+            <button id="back-to-topics-btn" class="inline-flex items-center space-x-1 text-xs font-semibold text-purple-300 hover:text-white mb-2 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+              <span>Back to Topics List</span>
+            </button>
+            <div class="flex items-center space-x-2">
+              <span id="level3-topic-session-pill" class="text-3xs font-bold px-2 py-0.5 rounded-full bg-purple-600/30 text-purple-300 border border-purple-500/40 uppercase tracking-wider">Session 1 Notes</span>
+              <span id="level3-subject-tag" class="text-xs text-[#A5B4FC]"></span>
+            </div>
+            <h2 id="level3-topic-title" class="text-xl sm:text-2xl font-bold text-white tracking-tight mt-1">Topic Title</h2>
+          </div>
+
+          <!-- Reading Toolbar -->
+          <div class="flex items-center space-x-2">
+            <!-- Font Sizer -->
+            <div class="inline-flex items-center rounded-lg border border-purple-500/30 bg-[#080B2F] p-0.5 text-xs font-semibold">
+              <button id="font-dec-btn" class="px-2 py-1 rounded text-[#DDD6FE] hover:text-white hover:bg-purple-600/30">A-</button>
+              <button id="font-reset-btn" class="px-2 py-1 rounded text-[#DDD6FE] hover:text-white hover:bg-purple-600/30 text-[0.7rem]">Default</button>
+              <button id="font-inc-btn" class="px-2 py-1 rounded text-[#DDD6FE] hover:text-white hover:bg-purple-600/30">A+</button>
+            </div>
+            <!-- Search in notes -->
+            <input 
+              type="text" 
+              id="topic-search-input" 
+              placeholder="Search in notes..." 
+              class="w-36 sm:w-48 px-3 py-1.5 text-xs rounded-lg bg-[#080B2F] border border-purple-500/30 text-white placeholder-purple-300/40 focus:outline-none focus:border-purple-400"
+            >
+            <!-- Print / PDF -->
+            <button id="print-topic-notes-btn" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#27205F] hover:bg-purple-600 text-white transition flex items-center space-x-1">
+              <svg class="w-3.5 h-3.5 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+              <span>Export PDF</span>
+            </button>
+            <button id="copy-topic-notes-btn" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-purple-500/30 bg-[#151748] hover:bg-purple-600 text-white transition">
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <!-- Split View: Topic Switcher Sidebar + Main Reading Document -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          <!-- Topic Switcher (3 cols) -->
+          <div class="lg:col-span-3 space-y-2 print-hide">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-[#A5B4FC] mb-1">Topics in this Subject</h4>
+            <div id="level3-topics-menu" class="space-y-1.5 max-h-[600px] overflow-y-auto pr-1">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Main Reading Canvas (9 cols) - Clean Light Reader for High Comfort -->
+          <div class="lg:col-span-9">
+            <div class="p-6 sm:p-10 rounded-2xl bg-white text-slate-900 border border-slate-200 shadow-xl">
+              <div class="pb-4 mb-6 border-b border-slate-200">
+                <span class="text-3xs font-bold uppercase tracking-wider text-purple-700 block mb-1">Textbook Academic Folio</span>
+                <h3 id="reading-content-title" class="text-2xl font-editorial font-bold text-slate-900">Topic Notes</h3>
+                <p id="reading-content-subtitle" class="text-xs text-slate-500 mt-1">Preserved lecture order from uploaded presentation materials.</p>
+              </div>
+
+              <!-- Markdown Render Area -->
+              <div id="reading-notes-content" class="markdown-notes font-size-md text-slate-800 leading-relaxed space-y-4">
+                <!-- Marked.parse notes populated here -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- AI Voice/Chat Assistant Drawer -->
+  <div id="ai-assistant-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="dark-card w-full max-w-xl h-[560px] flex flex-col shadow-2xl border border-purple-500/40">
+      <div class="p-4 border-b border-purple-500/20 flex items-center justify-between bg-[#151748]">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+              <span>StudyAI Companion</span>
+              <span class="text-3xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">English • Hindi • Hinglish</span>
+            </h3>
+            <p class="text-3xs text-[#DDD6FE]">Ask about concepts, numericals, or lecture breakdowns.</p>
+          </div>
+        </div>
+        <button id="close-assistant-btn" class="text-gray-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+      <div id="assistant-chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs leading-relaxed">
+        <div class="flex items-start space-x-2.5">
+          <div class="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white text-3xs shrink-0 mt-0.5">AI</div>
+          <div class="p-3 rounded-2xl rounded-tl-none bg-[#27205F]/80 border border-purple-500/20 text-[#F5F3FF] max-w-[85%]">
+            Namaste Aarav! 🙏 Main aapka personal StudyAI companion hoon. Aap mujhse kisi bhi topic ki explanation ya formulas pooch sakte hain.
+          </div>
+        </div>
+      </div>
+      <div class="p-3.5 border-t border-purple-500/20 bg-[#151748] flex items-center space-x-2">
+        <button id="assistant-mic-btn" class="w-9 h-9 rounded-full bg-purple-600/30 text-purple-300 hover:bg-purple-600 hover:text-white flex items-center justify-center transition shrink-0" title="Click to Speak (Speech-to-Text)">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"/></svg>
+        </button>
+        <input type="text" id="assistant-text-input" placeholder="Ask in English or Hinglish..." class="flex-1 px-3.5 py-2 text-xs rounded-xl bg-[#080B2F] border border-purple-500/30 text-white placeholder-purple-300/40 focus:outline-none focus:border-purple-400">
+        <button id="assistant-send-btn" class="btn-purple-glow px-3.5 py-2 text-xs font-semibold shrink-0">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+  <script src="js/notes.js?v=3.2"></script>
+</body>
+</html>

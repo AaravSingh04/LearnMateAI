@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subject Workspace — StudyAI LMS</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              purple: '#8B5CF6',
+              violet: '#7C3AED',
+              dark: '#080B2F',
+              surface: '#151748',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="css/styles.css?v=3.0">
+  <!-- Marked.js for markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    /* Instant zero-flicker display for returning students */
+    html.has-active-pack #no-material-selected-view { display: none !important; }
+    html.has-active-pack #study-pack-view { display: block !important; }
+    html.has-active-pack #pack-content-view { display: block !important; }
+    html.has-active-pack #pack-empty-view { display: none !important; }
+  </style>
+  <script>
+    // Immediate zero-flicker pre-render check before DOM paint
+    try {
+      const _p = new URLSearchParams(window.location.search);
+      const _sid = _p.get('subject_id') || _p.get('id') || sessionStorage.getItem('last_active_subject') || localStorage.getItem('last_active_subject') || '3';
+      const _mid = localStorage.getItem('active_material_' + _sid);
+      const _sp = _mid ? localStorage.getItem('study_pack_' + _mid) : (localStorage.getItem('latest_study_pack_for_subject_' + _sid) || localStorage.getItem('study_pack_4'));
+      if (_sp) {
+        document.documentElement.classList.add('has-active-pack');
+      }
+    } catch(e) {}
+  </script>
+</head>
+<body class="theme-light min-h-screen flex flex-col antialiased bg-[#F8F9FD] text-[#0F172A]">
+
+  <!-- Top Header Navigation -->
+  <header class="light-header sticky top-0 z-40 print-hide">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+      
+      <!-- Left: Logo & Back Button -->
+      <div class="flex items-center space-x-3.5">
+        <a href="index.html" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold btn-purple-outline transition">
+          <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+          <span>Dashboard</span>
+        </a>
+        <div class="h-4 w-px bg-slate-200 hidden sm:block"></div>
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path></svg>
+          </div>
+          <div>
+            <h1 class="text-sm font-bold tracking-tight text-slate-900 leading-none">StudyAI LMS</h1>
+            <span class="text-[0.6rem] font-bold text-purple-600 tracking-wider uppercase">Academic Reader</span>
+          </div>
+        </div>
+
+        <div class="hidden sm:flex items-center space-x-1 pl-2">
+          <a href="notes.html" class="px-2.5 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-purple-600 hover:bg-purple-50 transition">Notes Hub</a>
+          <a href="analytics.html" class="px-2.5 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-purple-600 hover:bg-purple-50 transition">Analytics</a>
+          <a href="timer.html" class="px-2.5 py-1 rounded-md text-xs font-semibold text-slate-600 hover:text-purple-600 hover:bg-purple-50 transition">Study Timer</a>
+        </div>
+      </div>
+
+      <!-- Center: Notes Search & Reading Controls -->
+      <div class="hidden md:flex items-center space-x-3 flex-1 max-w-md mx-4">
+        <div class="relative w-full">
+          <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input 
+            type="text" 
+            id="notes-search-input" 
+            placeholder="Search within generated notes..." 
+            class="w-full pl-9 pr-8 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+          >
+          <button id="clear-notes-search" class="hidden absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 text-xs">&times;</button>
+        </div>
+      </div>
+
+      <!-- Right: Reading Mode Font Sizer & Print PDF -->
+      <div class="flex items-center space-x-2">
+        <!-- Font Size Controls -->
+        <div class="inline-flex items-center rounded-lg border border-slate-200 bg-white p-0.5 text-xs font-semibold text-slate-600">
+          <button id="font-dec-btn" title="Decrease font size" class="px-2 py-1 rounded hover:bg-slate-100 transition">A-</button>
+          <button id="font-reset-btn" title="Default font size" class="px-2 py-1 rounded hover:bg-slate-100 transition text-[0.7rem]">Default</button>
+          <button id="font-inc-btn" title="Increase font size" class="px-2 py-1 rounded hover:bg-slate-100 transition">A+</button>
+        </div>
+
+        <!-- Print / Export as PDF -->
+        <button id="print-pdf-btn" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition flex items-center space-x-1.5 shadow-2xs">
+          <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+          <span class="hidden sm:inline">Export PDF</span>
+        </button>
+
+        <!-- User Profile Pill -->
+        <div class="flex items-center space-x-2 pl-2">
+          <div class="w-7 h-7 rounded-full bg-purple-600 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+            AS
+          </div>
+          <span class="text-xs font-semibold text-slate-700 hidden lg:inline">Aarav</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Canvas -->
+  <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+
+    <!-- Subject Banner Header -->
+    <div class="light-card p-6 border border-slate-200 mb-6 bg-white">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-2.5 mb-2">
+            <span class="pill-badge">
+              <span class="pill-dot"></span>
+              <span>Enrolled Course</span>
+            </span>
+            <span id="subject-loading-badge" class="text-xs text-slate-400 font-medium">Syncing subject data...</span>
+          </div>
+          <h1 id="subject-title" class="text-2xl sm:text-3xl font-editorial font-bold text-slate-900">Loading Subject...</h1>
+          <p id="subject-desc" class="text-xs sm:text-sm text-slate-500 mt-1.5 max-w-2xl leading-relaxed">
+            Upload slides, documents, or lecture notes. Study structured slide-by-slide notes, diagrams, step-by-step numerical explanations, and take interactive practice quizzes.
+          </p>
+        </div>
+
+        <div class="shrink-0 flex items-center space-x-2 self-start md:self-center">
+          <button id="audit-syllabus-banner-btn" class="px-3.5 py-2 text-xs font-semibold rounded-lg btn-purple-outline flex items-center space-x-1.5">
+            <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>Syllabus Audit</span>
+          </button>
+          <button id="refresh-materials-btn" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center space-x-1.5 shadow-2xs">
+            <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            <span>Refresh</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workspace Grid Layout: Left Sidebar (Topics + Uploads) & Right Content (Reading + Quizzes) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <!-- Left Column (4 cols on lg): Syllabus Progress, Topics, Materials, Dropzone -->
+      <div class="lg:col-span-4 space-y-5 print-hide">
+        
+        <!-- Syllabus Coverage Summary Card -->
+        <div class="light-card p-4 bg-white border border-slate-200">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[0.65rem] font-bold text-purple-600 tracking-wider uppercase">Syllabus Progress</span>
+            <span id="syllabus-coverage-pct" class="text-xs font-bold text-slate-900 bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full border border-purple-200">0% Covered</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-2 mb-2 overflow-hidden">
+            <div id="syllabus-progress-bar" class="bg-gradient-to-r from-purple-500 to-indigo-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+          <p class="text-[0.72rem] text-slate-500 flex items-center justify-between">
+            <span id="syllabus-status-text">Comparing documents with syllabus...</span>
+            <button id="open-syllabus-modal-link" class="text-purple-600 hover:text-purple-800 font-semibold underline text-[0.7rem]">Audit</button>
+          </p>
+        </div>
+
+        <!-- Topics Navigation Card -->
+        <div class="light-card p-4 bg-white border border-slate-200">
+          <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-100">
+            <div>
+              <span class="text-[0.65rem] font-bold text-purple-600 tracking-wider uppercase block">Curriculum</span>
+              <h3 class="text-sm font-bold text-slate-900">Subject Topics</h3>
+            </div>
+            <span id="topics-count-badge" class="text-2xs font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">0</span>
+          </div>
+
+          <div id="topics-list" class="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+            <div class="text-xs text-slate-400 text-center py-3">Loading topics...</div>
+          </div>
+        </div>
+
+        <!-- Compact Upload Strip (Minimal Size, Highly Aligned) -->
+        <div class="light-card p-3 bg-white border border-slate-200">
+          <form id="upload-form" class="space-y-2">
+            <div class="flex items-center justify-between text-2xs font-semibold text-slate-700">
+              <span class="flex items-center space-x-1.5 text-purple-700 font-bold uppercase tracking-wider text-[0.62rem]">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                <span>Upload Lecture Slide / Notes</span>
+              </span>
+              <span class="text-slate-400 text-3xs">PPTX, PDF (Max 25MB)</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <div 
+                id="drop-zone"
+                class="flex-1 flex items-center px-3 py-1.5 rounded-lg border border-dashed border-purple-300 hover:border-purple-500 bg-purple-50/30 hover:bg-purple-50/60 cursor-pointer transition text-xs text-slate-700 truncate"
+              >
+                <input type="file" id="file-input" accept=".pdf,.pptx,.ppt,.docx,.txt" class="hidden">
+                <span id="file-selected-name" class="truncate text-slate-600 font-medium text-xs">Choose or drag slide deck...</span>
+              </div>
+
+              <button 
+                type="submit" 
+                id="upload-submit-btn" 
+                disabled
+                class="shrink-0 px-3.5 py-1.5 rounded-lg btn-purple-glow text-xs font-semibold transition flex items-center space-x-1.5 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <span id="upload-spinner" class="hidden loader-spin !w-3 !h-3 !border-white !border-t-transparent"></span>
+                <span id="upload-btn-text">Upload</span>
+              </button>
+            </div>
+
+            <div id="upload-error" class="hidden p-2 rounded-md bg-rose-50 border border-rose-200 text-3xs text-rose-700 leading-snug"></div>
+          </form>
+        </div>
+
+        <!-- Materials List Card -->
+        <div class="light-card p-4 bg-white border border-slate-200">
+          <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-slate-100">
+            <div>
+              <span class="text-[0.65rem] font-bold text-purple-600 tracking-wider uppercase block">Documents Repository</span>
+              <h3 class="text-sm font-bold text-slate-900">Uploaded Materials</h3>
+            </div>
+            <span id="materials-count-badge" class="text-2xs font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">0</span>
+          </div>
+
+          <div id="materials-loading" class="text-center py-6 text-xs text-slate-400 font-medium">
+            <div class="loader-spin !w-4 !h-4 mb-2"></div>
+            <p>Loading files...</p>
+          </div>
+
+          <div id="materials-empty" class="hidden text-center py-8 px-3 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+            <p class="text-xs font-semibold text-slate-800">No Materials Uploaded Yet</p>
+            <p class="text-[0.72rem] text-slate-500 mt-1 leading-relaxed">Upload a PowerPoint deck or document above to begin reading and generating practice quizzes.</p>
+          </div>
+
+          <div id="materials-list" class="space-y-2">
+            <!-- Populated dynamically by subject.js -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column (8 cols on lg): Reading Canvas & Quiz Workspace -->
+      <div class="lg:col-span-8">
+        
+        <!-- Welcome Prompt (No Material Selected) -->
+        <div id="no-material-selected-view" class="light-card p-12 border border-dashed border-slate-300 text-center bg-white">
+          <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center shadow-xs">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+          </div>
+          <span class="text-[0.65rem] font-bold text-purple-600 tracking-wider uppercase block mb-1">Interactive Academic Reader</span>
+          <h3 class="text-xl font-editorial font-bold text-slate-900">Select a Class Material to Begin</h3>
+          <p class="text-xs text-slate-500 max-w-md mx-auto mt-1.5 leading-relaxed">
+            Choose a presentation or document from the left, or upload a new slide deck. Gemini AI will analyze every slide, graph, diagram, and numerical problem to generate deep revision notes and interactive quizzes.
+          </p>
+        </div>
+
+        <!-- Material Details & Study Pack Workspace (Visible when file selected) -->
+        <div id="study-pack-view" class="hidden space-y-5">
+          
+          <!-- Active Material Toolbar -->
+          <div class="light-card p-4 sm:p-5 border border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span id="active-file-type-badge" class="text-[0.65rem] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-purple-100 text-purple-700 border border-purple-200">PPTX</span>
+                <h3 id="active-material-name" class="text-base font-bold text-slate-900 truncate max-w-sm sm:max-w-md">lecture.pptx</h3>
+              </div>
+              <p class="text-[0.7rem] text-slate-500 mt-1" id="active-material-uploaded-at">Uploaded on: Oct 30, 2026</p>
+            </div>
+
+            <div class="flex items-center space-x-2 shrink-0">
+              <button 
+                id="generate-pack-btn"
+                class="px-4 py-2 rounded-lg btn-purple-glow text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm cursor-pointer"
+              >
+                <span id="generate-pack-spinner" class="hidden loader-spin !w-3.5 !h-3.5 !border-white !border-t-transparent"></span>
+                <span id="generate-pack-text">Generate Study Pack</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Generation Error Banner -->
+          <div id="generation-error-banner" class="hidden p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800"></div>
+
+          <!-- Loading State during AI Generation -->
+          <div id="pack-loading-view" class="hidden light-card p-10 border border-purple-200 text-center bg-gradient-to-b from-purple-50/40 to-white shadow-sm">
+            <div class="loader-spin !w-9 !h-9 mb-3.5 !border-purple-600 !border-t-transparent mx-auto"></div>
+            <h4 class="text-base font-editorial font-bold text-slate-900">Formulating Fast Study Pack with Gemini AI...</h4>
+            <p id="pack-loading-step-text" class="text-xs text-purple-700 font-semibold mt-1">
+              Analyzing slides, key definitions, and lecture concepts...
+            </p>
+            <div class="max-w-xs mx-auto mt-3 h-1.5 bg-purple-100 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full animate-pulse w-3/4"></div>
+            </div>
+          </div>
+
+          <!-- Study Pack Not Generated Yet State -->
+          <div id="pack-empty-view" class="hidden light-card p-12 border border-dashed border-slate-300 text-center bg-white">
+            <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+            <span class="text-[0.65rem] font-bold text-purple-600 tracking-wider uppercase block mb-0.5">Study Pack Ready</span>
+            <h4 class="text-lg font-editorial font-bold text-slate-900">No Study Pack Generated Yet</h4>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4 leading-relaxed">
+              Click the "Generate Study Pack" button above to formulate structured revision notes and an interactive quiz from this document.
+            </p>
+          </div>
+
+          <!-- Study Pack Content View -->
+          <div id="pack-content-view" class="hidden space-y-4">
+            
+            <!-- Navigation Tabs -->
+            <div class="flex border-b border-slate-200 bg-white px-2 rounded-t-xl overflow-x-auto print-hide">
+              <button class="reader-tab-btn active" data-tab="notes">
+                Revision Notes
+              </button>
+              <button class="reader-tab-btn" data-tab="concepts">
+                Key Concepts
+              </button>
+              <button class="reader-tab-btn" data-tab="self-notes">
+                📝 Self Notes
+              </button>
+              <button class="reader-tab-btn" data-tab="quiz">
+                Practice Quiz
+              </button>
+              <button class="reader-tab-btn" data-tab="history">
+                Quiz History
+              </button>
+              <button class="reader-tab-btn" data-tab="syllabus">
+                Syllabus Coverage
+              </button>
+            </div>
+
+            <!-- Tab 1: Revision Notes (Slide-by-slide, Graphs, Numerical Problems) -->
+            <div id="tab-notes" class="tab-pane light-card p-6 sm:p-8 rounded-b-xl border border-slate-200 bg-white">
+              <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 print-hide">
+                <div>
+                  <span class="text-[0.65rem] font-bold text-purple-600 tracking-wider uppercase block mb-0.5">Comprehensive Study Folio</span>
+                  <h4 class="text-base font-editorial font-bold text-slate-900">Detailed Academic Notes</h4>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <button id="copy-notes-btn" class="px-2.5 py-1 text-xs font-semibold rounded border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition">
+                    Copy Notes
+                  </button>
+                </div>
+              </div>
+              <div id="notes-content" class="markdown-notes font-size-md">
+                <!-- Populated by marked.parse() in subject.js -->
+              </div>
+            </div>
+
+            <!-- Tab 2: Key Concepts Grid -->
+            <div id="tab-concepts" class="tab-pane hidden light-card p-6 rounded-b-xl border border-slate-200 bg-white">
+              <div class="pb-3 mb-4 border-b border-slate-100">
+                <span class="text-[0.65rem] font-bold text-purple-600 tracking-wider uppercase block mb-0.5">Core Theoretical Foundations</span>
+                <h4 class="text-base font-editorial font-bold text-slate-900">Key Concepts Explained</h4>
+              </div>
+              <div id="concepts-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Concept cards rendered here -->
+              </div>
+            </div>
+
+            <!-- Tab 3: Student Self Notes -->
+            <div id="tab-self-notes" class="tab-pane hidden light-card p-6 sm:p-8 rounded-b-xl border border-slate-200 bg-white space-y-4">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-100 gap-2">
+                <div>
+                  <span class="text-[0.65rem] font-bold text-purple-600 tracking-wider uppercase block mb-0.5">Personal Learning Workspace</span>
+                  <h4 class="text-base font-editorial font-bold text-slate-900">My Study Notes & Insights</h4>
+                  <p class="text-xs text-slate-500 mt-0.5">Type your own personal takeaways, formulas, doubts, and lecture observations.</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <span id="self-notes-status" class="text-3xs font-semibold text-slate-400">All changes saved</span>
+                  <button type="button" id="save-self-notes-btn" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg btn-purple-glow flex items-center space-x-1.5 shadow-sm cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    <span>Save Notes</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Self Notes Textarea with clean writing canvas -->
+              <div class="space-y-2">
+                <textarea 
+                  id="self-notes-textarea" 
+                  rows="14" 
+                  placeholder="Start typing your personal notes, formulas, memory shortcuts, or questions for this lecture..."
+                  class="w-full p-4 text-xs sm:text-sm text-slate-800 bg-slate-50/70 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200/50 leading-relaxed font-sans transition"
+                ></textarea>
+                <div class="flex items-center justify-between text-3xs text-slate-400 px-1">
+                  <span id="self-notes-word-count">0 words • 0 characters</span>
+                  <span>Markdown & bullet points supported</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 4: Interactive Practice Quiz -->
+            <div id="tab-quiz" class="tab-pane hidden light-card p-6 rounded-b-xl border border-slate-200 bg-white">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-5">
+                <div>
+                  <span class="text-[0.65rem] font-bold text-purple-600 tracking-wider uppercase block mb-0.5">Knowledge Assessment</span>
+                  <h4 class="text-base font-editorial font-bold text-slate-900">Interactive Quiz & Pedagogical Analysis</h4>
+                  <p class="text-xs text-slate-500">Evaluated on the server with in-depth 3-part conceptual explanations for every right and wrong response.</p>
+                </div>
+                <div id="quiz-score-badge" class="hidden text-xs font-semibold px-3 py-1 rounded-full bg-purple-100 text-purple-800 border border-purple-200"></div>
+              </div>
+
+              <!-- Graded Results Summary Card (shown after submission) -->
+              <div id="quiz-summary-card" class="hidden mb-6 p-5 rounded-xl border border-purple-200 bg-purple-50/50 space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div class="flex items-center space-x-3.5">
+                    <div id="quiz-score-circle" class="w-13 h-13 rounded-full flex items-center justify-center font-bold text-base bg-purple-600 text-white shadow-sm shrink-0">
+                      --%
+                    </div>
+                    <div>
+                      <div class="flex items-center space-x-2">
+                        <h5 id="quiz-performance-title" class="text-sm font-bold text-slate-900">Quiz Completed</h5>
+                        <span id="quiz-grade-pill" class="text-2xs font-bold px-2 py-0.5 rounded-full bg-purple-200 text-purple-800 uppercase">Evaluated</span>
+                      </div>
+                      <p id="quiz-performance-subtitle" class="text-xs text-slate-600 mt-0.5">Review the detailed conceptual explanations below to understand every right and wrong answer.</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-2 shrink-0">
+                    <button type="button" id="retake-quiz-btn" class="px-3.5 py-2 text-xs font-semibold rounded-lg btn-purple-glow flex items-center space-x-1.5 shadow-sm cursor-pointer">
+                      <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                      <span>Retake Quiz</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Review Filter Pills -->
+                <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-purple-200/60 text-xs">
+                  <span class="text-[0.68rem] font-bold text-slate-500 uppercase tracking-wider mr-1">Filter Breakdown:</span>
+                  <button type="button" id="filter-all-btn" class="px-2.5 py-1 rounded-md font-semibold bg-purple-600 text-white text-xs transition">
+                    All Questions (<span id="count-all-q">0</span>)
+                  </button>
+                  <button type="button" id="filter-wrong-btn" class="px-2.5 py-1 rounded-md font-semibold bg-white border border-slate-200 text-rose-700 hover:border-rose-300 text-xs transition">
+                    Incorrect Only (<span id="count-wrong-q">0</span>)
+                  </button>
+                  <button type="button" id="filter-correct-btn" class="px-2.5 py-1 rounded-md font-semibold bg-white border border-slate-200 text-emerald-700 hover:border-emerald-300 text-xs transition">
+                    Correct Only (<span id="count-correct-q">0</span>)
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quiz Form -->
+              <form id="quiz-form" class="space-y-6">
+                <div id="quiz-questions-container" class="space-y-6">
+                  <!-- Rendered questions -->
+                </div>
+
+                <div id="quiz-error" class="hidden p-3 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-700"></div>
+
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-end">
+                  <button 
+                    type="submit" 
+                    id="submit-quiz-btn"
+                    class="px-5 py-2.5 rounded-lg btn-purple-glow text-xs font-semibold transition flex items-center space-x-2 shadow-sm cursor-pointer"
+                  >
+                    <span id="quiz-submit-spinner" class="hidden loader-spin !w-3.5 !h-3.5 !border-white !border-t-transparent"></span>
+                    <span id="quiz-submit-text">Submit for Evaluation</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Tab 5: Quiz History -->
+            <div id="tab-history" class="tab-pane hidden light-card p-6 rounded-b-xl border border-slate-200 bg-white">
+              <div class="pb-3 mb-4 border-b border-slate-100">
+                <span class="text-[0.65rem] font-bold text-purple-600 tracking-wider uppercase block mb-0.5">Archival Records</span>
+                <h4 class="text-base font-editorial font-bold text-slate-900">Past Quiz Attempts</h4>
+              </div>
+              <div id="history-container" class="space-y-3">
+                <!-- Rendered history -->
+              </div>
+            </div>
+
+            <!-- Tab 6: Syllabus Audit & Gap Analysis -->
+            <div id="tab-syllabus" class="tab-pane hidden light-card p-6 rounded-b-xl border border-slate-200 bg-white">
+              <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+                <div>
+                  <span class="text-[0.65rem] font-bold text-purple-600 tracking-wider uppercase block mb-0.5">Curriculum Mapping</span>
+                  <h4 class="text-base font-editorial font-bold text-slate-900">Syllabus Coverage & Missing Topics</h4>
+                  <p class="text-xs text-slate-500">Cross-analyzes all uploaded course materials against your target curriculum.</p>
+                </div>
+                <button id="re-audit-btn" class="px-3 py-1.5 rounded-lg btn-purple-outline text-xs font-semibold">
+                  Update Syllabus
+                </button>
+              </div>
+
+              <div id="syllabus-audit-results" class="space-y-4">
+                <div class="p-6 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-center">
+                  <p class="text-xs text-slate-600 font-semibold mb-2">No Syllabus Analysis Performed Yet</p>
+                  <p class="text-[0.75rem] text-slate-500 mb-4 max-w-sm mx-auto">Paste your syllabus outline to identify covered topics and discover what lecture materials are missing.</p>
+                  <button id="start-syllabus-audit-btn" class="px-4 py-2 rounded-lg btn-purple-glow text-xs font-semibold">
+                    Paste Syllabus Outline
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Syllabus Audit Modal -->
+  <div id="syllabus-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="light-card rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 bg-white">
+      <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+        <div>
+          <span class="text-[0.65rem] font-bold text-purple-600 tracking-wider uppercase block">Curriculum AI</span>
+          <h3 class="text-base font-bold text-slate-900">Audit Syllabus Coverage</h3>
+        </div>
+        <button id="close-syllabus-modal" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-600 mb-3 leading-relaxed">
+        Paste your course syllabus, topic list, or lecture schedule below. Gemini will evaluate all uploaded documents and calculate your syllabus completion percentage.
+      </p>
+
+      <form id="syllabus-form" class="space-y-4">
+        <div>
+          <textarea 
+            id="syllabus-textarea" 
+            rows="6" 
+            placeholder="e.g.&#10;Unit 1: Introduction to Managerial Economics & Scarcity&#10;Unit 2: Circular Flow Model and Market Structures&#10;Unit 3: Real vs Nominal Prices & Elasticity&#10;Unit 4: Production Functions and Isoquants" 
+            class="w-full p-3 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 font-mono"
+            required
+          ></textarea>
+        </div>
+
+        <div id="syllabus-audit-error" class="hidden p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-700"></div>
+
+        <div class="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+          <button type="button" id="cancel-syllabus-btn" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700">
+            Cancel
+          </button>
+          <button type="submit" id="run-syllabus-audit-btn" class="px-4 py-2 text-xs font-semibold rounded-lg btn-purple-glow flex items-center space-x-2">
+            <span id="syllabus-spinner" class="hidden loader-spin !w-3.5 !h-3.5 !border-white !border-t-transparent"></span>
+            <span id="syllabus-btn-text">Analyze Coverage</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Material Confirmation Modal -->
+  <div id="delete-material-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="light-card rounded-2xl max-w-md w-full p-6 shadow-2xl border border-rose-200 bg-white">
+      <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-3">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+      </div>
+      <h4 class="text-base font-bold text-slate-900">Delete Material?</h4>
+      <p class="text-xs text-slate-600 mt-1 mb-4 leading-relaxed">
+        Are you sure you want to delete <span id="delete-material-name" class="font-bold text-slate-900"></span>? 
+        The stored document, its extracted notes, study pack, and quiz scores will be permanently deleted.
+      </p>
+
+      <div id="delete-material-error" class="hidden p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-700 mb-3"></div>
+
+      <div class="flex items-center justify-end space-x-2 border-t border-slate-100 pt-3">
+        <button type="button" id="cancel-delete-material-btn" class="px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700">
+          Cancel
+        </button>
+        <button type="button" id="confirm-delete-material-btn" class="px-4 py-2 text-xs font-semibold rounded-lg bg-rose-600 hover:bg-rose-700 text-white transition flex items-center space-x-1.5 shadow-sm">
+          <span id="confirm-delete-mat-spinner" class="hidden loader-spin !w-3 !h-3 !border-white !border-t-transparent"></span>
+          <span>Delete File</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Past Quiz Attempt Review Modal -->
+  <div id="attempt-review-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+    <div class="light-card rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-purple-200 bg-white">
+      
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 rounded-t-2xl">
+        <div class="flex items-center space-x-3">
+          <div id="modal-score-badge" class="w-12 h-12 rounded-xl flex items-center justify-center font-extrabold text-sm bg-purple-600 text-white shadow-md shrink-0">
+            --%
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h3 id="modal-review-title" class="text-base font-bold text-slate-900">Quiz Attempt Review</h3>
+              <span id="modal-grade-pill" class="text-3xs font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 uppercase">Graded</span>
+            </div>
+            <p id="modal-review-subtitle" class="text-xs text-slate-500 mt-0.5">Attempted on --</p>
+          </div>
+        </div>
+        <button id="close-attempt-modal-btn" class="text-slate-400 hover:text-slate-700 text-2xl font-bold leading-none p-1">&times;</button>
+      </div>
+
+      <!-- Filter Pills Bar -->
+      <div class="px-5 py-2.5 bg-white border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center space-x-2">
+          <span class="text-3xs font-bold text-slate-400 uppercase tracking-wider">Filter Questions:</span>
+          <button type="button" id="modal-filter-all" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-purple-600 text-white transition">
+            All (<span id="modal-count-all">0</span>)
+          </button>
+          <button type="button" id="modal-filter-wrong" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-rose-700 border border-slate-200 hover:border-rose-300 transition">
+            Incorrect (<span id="modal-count-wrong">0</span>)
+          </button>
+          <button type="button" id="modal-filter-correct" class="px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-emerald-700 border border-slate-200 hover:border-emerald-300 transition">
+            Correct (<span id="modal-count-correct">0</span>)
+          </button>
+        </div>
+        <div class="text-3xs text-slate-400 italic">
+          Complete answer comparison & theory explanations
+        </div>
+      </div>
+
+      <!-- Question List Body -->
+      <div id="modal-questions-list" class="flex-1 p-5 overflow-y-auto space-y-4 bg-slate-50/50">
+        <!-- Injected dynamically -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3.5 border-t border-slate-100 bg-slate-50/80 rounded-b-2xl flex items-center justify-between">
+        <span class="text-3xs text-slate-500">Evaluated with detailed conceptual breakdowns.</span>
+        <button type="button" id="modal-done-btn" class="btn-purple-glow px-4 py-2 text-xs font-semibold rounded-lg">
+          Close Review
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-4 mt-auto print-hide">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+      <p>StudyAI LMS — Academic Reading Workspace. Local storage in SQLite.</p>
+      <div class="flex items-center space-x-3 text-[0.7rem] font-bold text-purple-600 uppercase tracking-wider">
+        <span>Dual-Theme AI Companion</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Subject Workspace Script -->
+  <script src="js/subject.js?v=3.0"></script>
+</body>
+</html>
