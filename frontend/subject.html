@@ -57,6 +57,10 @@
           <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
           <span>Dashboard</span>
         </a>
+        <button id="open-add-subject-modal-btn" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold btn-purple-glow transition cursor-pointer">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          <span>+ Add Subject</span>
+        </button>
         <div class="h-4 w-px bg-slate-200 hidden sm:block"></div>
         <div class="flex items-center space-x-2.5">
           <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-sm">
@@ -258,8 +262,12 @@
           <span class="text-[0.65rem] font-bold text-purple-600 tracking-wider uppercase block mb-1">Interactive Academic Reader</span>
           <h3 class="text-xl font-editorial font-bold text-slate-900">Select a Class Material to Begin</h3>
           <p class="text-xs text-slate-500 max-w-md mx-auto mt-1.5 leading-relaxed">
-            Choose a presentation or document from the left, or upload a new slide deck. Gemini AI will analyze every slide, graph, diagram, and numerical problem to generate deep revision notes and interactive quizzes.
+            Choose a presentation or document from the left, or upload a new slide deck. AI will analyze every slide, graph, diagram, and numerical problem to generate deep revision notes and interactive quizzes.
           </p>
+          <button type="button" onclick="document.getElementById('file-input').click()" class="mt-4 px-4 py-2 rounded-xl btn-purple-glow text-xs font-semibold inline-flex items-center space-x-2 cursor-pointer shadow-sm hover:scale-105 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            <span>Upload Slide Deck / Document Now</span>
+          </button>
         </div>
 
         <!-- Material Details & Study Pack Workspace (Visible when file selected) -->
@@ -309,8 +317,12 @@
             <span class="text-[0.65rem] font-bold text-purple-600 tracking-wider uppercase block mb-0.5">Study Pack Ready</span>
             <h4 class="text-lg font-editorial font-bold text-slate-900">No Study Pack Generated Yet</h4>
             <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4 leading-relaxed">
-              Click the "Generate Study Pack" button above to formulate structured revision notes and an interactive quiz from this document.
+              Click below to formulate structured revision notes, key concepts, and an interactive quiz from this document.
             </p>
+            <button type="button" onclick="document.getElementById('generate-pack-btn').click()" class="px-5 py-2.5 rounded-xl btn-purple-glow text-xs font-semibold inline-flex items-center space-x-2 cursor-pointer shadow-sm hover:scale-105 transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+              <span>⚡ Generate AI Study Pack & Notes</span>
+            </button>
           </div>
 
           <!-- Study Pack Content View -->
@@ -652,5 +664,33 @@
 
   <!-- Subject Workspace Script -->
   <script src="js/subject.js?v=3.0"></script>
+
+  <!-- Add Subject Modal -->
+  <div id="add-subject-modal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="dark-card w-full max-w-md p-6 shadow-2xl border border-purple-500/40">
+      <div class="flex items-center justify-between pb-3 border-b border-purple-500/20 mb-4">
+        <h3 class="text-base font-bold text-white tracking-tight">Add New Subject</h3>
+        <button id="close-add-subject-btn" class="text-slate-400 hover:text-white p-1 rounded-md transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form id="add-subject-form" class="space-y-4">
+        <div>
+          <label class="block text-2xs font-bold uppercase tracking-wider text-[#A5B4FC] mb-1.5">Subject Name *</label>
+          <input type="text" id="new-subject-name" required placeholder="e.g. Behavioral Economics" class="input-dark w-full px-3 py-2 text-xs">
+        </div>
+        <div>
+          <label class="block text-2xs font-bold uppercase tracking-wider text-[#A5B4FC] mb-1.5">Description (Optional)</label>
+          <textarea id="new-subject-desc" rows="2" placeholder="Course overview or semester details..." class="input-dark w-full px-3 py-2 text-xs resize-none"></textarea>
+        </div>
+        <div id="add-subject-error" class="hidden p-2 rounded bg-rose-500/20 border border-rose-500/30 text-rose-300 text-3xs"></div>
+        <div class="flex items-center justify-end space-x-2 pt-2 border-t border-purple-500/20">
+          <button type="button" id="cancel-add-subject-btn" class="px-3 py-1.5 rounded-lg border border-purple-500/30 text-xs text-[#DDD6FE] hover:bg-white/5 transition">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg btn-purple-glow text-xs font-semibold">Create Subject</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 </body>
 </html>

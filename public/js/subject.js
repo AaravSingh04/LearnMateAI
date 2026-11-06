@@ -1706,3 +1706,55 @@ window.addEventListener('popstate', () => {
   prehydrateWorkspace();
   initWorkspace();
 });
+
+
+// Add Subject Modal Handlers in Notes Hub
+const addSubModal = document.getElementById('add-subject-modal');
+const openAddSubBtn = document.getElementById('open-add-subject-modal-btn');
+const closeAddSubBtn = document.getElementById('close-add-subject-btn');
+const cancelAddSubBtn = document.getElementById('cancel-add-subject-btn');
+const addSubForm = document.getElementById('add-subject-form');
+const newSubName = document.getElementById('new-subject-name');
+const newSubDesc = document.getElementById('new-subject-desc');
+const addSubErr = document.getElementById('add-subject-error');
+
+if (openAddSubBtn) {
+  openAddSubBtn.addEventListener('click', () => {
+    if (addSubErr) addSubErr.classList.add('hidden');
+    if (addSubForm) addSubForm.reset();
+    if (addSubModal) addSubModal.classList.remove('hidden');
+    if (newSubName) newSubName.focus();
+  });
+}
+if (closeAddSubBtn) closeAddSubBtn.addEventListener('click', () => addSubModal && addSubModal.classList.add('hidden'));
+if (cancelAddSubBtn) cancelAddSubBtn.addEventListener('click', () => addSubModal && addSubModal.classList.add('hidden'));
+
+if (addSubForm) {
+  addSubForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = newSubName.value.trim();
+    const description = newSubDesc ? newSubDesc.value.trim() : '';
+    if (!name) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/subjects`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description: description || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed to create subject.');
+      if (addSubModal) addSubModal.classList.add('hidden');
+      showToast(`Subject "${data.name}" created! Opening workspace...`, 'success');
+      localStorage.setItem('last_active_subject', data.id);
+      setTimeout(() => {
+        window.location.href = `subject.html?subject_id=${data.id}`;
+      }, 350);
+    } catch (err) {
+      if (addSubErr) {
+        addSubErr.textContent = err.message;
+        addSubErr.classList.remove('hidden');
+      }
+    }
+  });
+}

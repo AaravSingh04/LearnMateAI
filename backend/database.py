@@ -34,22 +34,24 @@ def ensure_directories() -> None:
 
 def seed_initial_data(conn: sqlite3.Connection) -> None:
     """Seed initial demo subjects, materials, and study packs if database is empty."""
-    seed_file = PROJECT_ROOT / "data" / "seed_data.sql"
-    if seed_file.exists():
-        try:
-            with open(seed_file, "r", encoding="utf-8") as f:
-                sql_script = f.read()
-            conn.executescript(sql_script)
-        except Exception as e:
-            print(f"Notice: Could not load seed data: {e}")
+    try:
+        from backend.seed_data import seed_database
+        seed_database(conn)
+    except Exception as e:
+        print(f"Notice: Could not load seed data: {e}")
+
+
+_db_initialized = False
 
 
 def get_db_connection() -> sqlite3.Connection:
     """Create and return a SQLite database connection with row factory
-
-    and foreign key constraints enabled.
+    and foreign key constraints enabled. Ensures tables are initialized.
     """
+    global _db_initialized
     ensure_directories()
+    if not _db_initialized or not DB_PATH.exists():
+        init_db()
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     # Crucial for cascade deletion and relational integrity
@@ -59,8 +61,11 @@ def get_db_connection() -> sqlite3.Connection:
 
 def init_db() -> None:
     """Initialize SQLite database tables if they do not exist."""
+    global _db_initialized
     ensure_directories()
-    conn = get_db_connection()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON;")
     try:
         with conn:
             # 1. subjects table
@@ -240,6 +245,7 @@ def init_db() -> None:
             row = cursor.fetchone()
             if row and row["cnt"] == 0:
                 seed_initial_data(conn)
+        _db_initialized = True
     finally:
         conn.close()
 

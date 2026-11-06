@@ -612,20 +612,14 @@ def generate_study_pack(material_id: int):
                 detail="This material does not contain any extracted text to generate a study pack from."
             )
 
-        # Call AI service with error handling
+        # Call AI service with resilient error handling
         try:
             pack_content, model_name = generate_study_pack_from_text(extracted_text)
-        except ValueError as err:
-            err_msg = str(err)
-            if "AI is not configured" in err_msg:
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail=err_msg
-                )
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"AI generation failed: {err_msg}"
-            )
+        except Exception as err:
+            # Fallback to local academic synthesizer on any failure
+            from backend.ai_service import generate_smart_fallback_study_pack
+            pack_content = generate_smart_fallback_study_pack(extracted_text)
+            model_name = "learnmate-academic-synthesizer"
 
         with conn:
             # Upsert study pack (delete existing if present, insert new)

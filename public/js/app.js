@@ -850,13 +850,23 @@ addSubForm.addEventListener('submit', async (e) => {
     if (!res.ok) throw new Error(data.detail || 'Failed to create subject.');
 
     addSubModal.classList.add('hidden');
-    showToast(`Subject "${data.name}" created!`, 'success');
-    await fetchSubjects();
+    showToast(`Subject "${data.name}" created! Opening workspace...`, 'success');
+    localStorage.setItem('last_active_subject', data.id);
+    setTimeout(() => {
+      window.location.href = `subject.html?subject_id=${data.id}`;
+    }, 350);
   } catch (err) {
     addSubErr.textContent = err.message;
     addSubErr.classList.remove('hidden');
   }
 });
+
+// Auto-open Add Subject modal if navigated with #add-subject
+if (window.location.hash === '#add-subject' || window.location.hash === '#open-add-subject') {
+  if (openAddSubBtn) {
+    setTimeout(() => openAddSubBtn.click(), 250);
+  }
+}
 
 // Notifications Bell Click
 document.getElementById('notifications-btn').addEventListener('click', () => {
