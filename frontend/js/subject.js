@@ -219,7 +219,16 @@ function prehydrateWorkspace() {
       matToHydrate = materialsList.find(m => m.has_study_pack) || materialsList[0];
     }
 
-    const effectiveMatId = matToHydrate ? matToHydrate.id : (cachedMatId ? parseInt(cachedMatId, 10) : 4);
+    // STRICT SUBJECT ISOLATION: If no material belongs to this subject, never show another subject's pack
+    if (!matToHydrate || materialsList.length === 0) {
+      activeMaterial = null;
+      currentStudyPack = null;
+      if (noMaterialSelectedView) noMaterialSelectedView.classList.remove('hidden');
+      if (studyPackView) studyPackView.classList.add('hidden');
+      return;
+    }
+
+    const effectiveMatId = matToHydrate.id;
     const cachedPackStr = localStorage.getItem('study_pack_' + effectiveMatId) || localStorage.getItem('latest_study_pack_for_subject_' + subjectId);
 
     if (cachedPackStr) {
@@ -386,9 +395,13 @@ async function fetchMaterials() {
       if (targetMat && (!activeMaterial || activeMaterial.id !== targetMat.id || !currentStudyPack)) {
         selectMaterial(targetMat.id);
       }
-    } else if (materialsList.length === 0) {
-      noMaterialSelectedView.classList.remove('hidden');
-      studyPackView.classList.add('hidden');
+    } else {
+      activeMaterial = null;
+      currentStudyPack = null;
+      localStorage.removeItem('active_material_' + subjectId);
+      localStorage.removeItem('latest_study_pack_for_subject_' + subjectId);
+      if (noMaterialSelectedView) noMaterialSelectedView.classList.remove('hidden');
+      if (studyPackView) studyPackView.classList.add('hidden');
     }
   } catch (err) {
     showToast(err.message, 'error');
@@ -1787,6 +1800,114 @@ if (addSubForm) {
         addSubErr.textContent = err.message;
         addSubErr.classList.remove('hidden');
       }
+    }
+  });
+}
+
+// =============================================================================
+// Edit & Delete Subject Logic
+// =============================================================================
+const editSubjectBtn = document.getElementById('edit-subject-btn');
+const editSubjectModal = document.getElementById('edit-subject-modal');
+const closeEditSubjectBtn = document.getElementById('close-edit-subject-btn');
+const cancelEditSubjectBtn = document.getElementById('cancel-edit-subject-btn');
+const editSubjectForm = document.getElementById('edit-subject-form');
+const editSubjectNameInput = document.getElementById('edit-subject-name-input');
+const editSubjectDescInput = document.getElementById('edit-subject-desc-input');
+const editSubjectError = document.getElementById('edit-subject-error');
+
+function openEditSubjectModal() {
+  if (!currentSubject) return;
+  editSubjectNameInput.value = currentSubject.name || '';
+  editSubjectDescInput.value = currentSubject.description || '';
+  editSubjectError.classList.add('hidden');
+  editSubjectModal.classList.remove('hidden');
+}
+
+function closeEditSubjectModal() {
+  editSubjectModal.classList.add('hidden');
+}
+
+if (editSubjectBtn) editSubjectBtn.addEventListener('click', openEditSubjectModal);
+if (closeEditSubjectBtn) closeEditSubjectBtn.addEventListener('click', closeEditSubjectModal);
+if (cancelEditSubjectBtn) cancelEditSubjectBtn.addEventListener('click', closeEditSubjectModal);
+
+if (editSubjectForm) {
+  editSubjectForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newName = editSubjectNameInput.value.trim();
+    const newDesc = editSubjectDescInput.value.trim();
+    if (!newName) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/subjects/${subjectId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName, description: newDesc || null })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed to update subject.');
+
+      currentSubject = data;
+      localStorage.setItem('subject_data_' + subjectId, JSON.stringify(currentSubject));
+      document.title = `${currentSubject.name} — StudyAI LMS`;
+      subjectTitle.textContent = currentSubject.name;
+      subjectDesc.textContent = currentSubject.description || 'Comprehensive curriculum with AI slide synthesis, diagrams, and numerical solutions.';
+      closeEditSubjectModal();
+      showToast('Subject updated successfully!', 'success');
+    } catch (err) {
+      editSubjectError.textContent = err.message;
+      editSubjectError.classList.remove('hidden');
+    }
+  });
+}
+
+const deleteSubjectBtn = document.getElementById('delete-subject-btn');
+const deleteSubjectModal = document.getElementById('delete-subject-modal');
+const closeDeleteSubjectBtn = document.getElementById('close-delete-subject-btn');
+const cancelDeleteSubjectBtn = document.getElementById('cancel-delete-subject-btn');
+const confirmDeleteSubjectBtn = document.getElementById('confirm-delete-subject-btn');
+const deleteSubjectNamePreview = document.getElementById('delete-subject-name-preview');
+const deleteSubjectError = document.getElementById('delete-subject-error');
+
+function openDeleteSubjectModal() {
+  if (!currentSubject) return;
+  deleteSubjectNamePreview.textContent = currentSubject.name;
+  deleteSubjectError.classList.add('hidden');
+  deleteSubjectModal.classList.remove('hidden');
+}
+
+function closeDeleteSubjectModal() {
+  deleteSubjectModal.classList.add('hidden');
+}
+
+if (deleteSubjectBtn) deleteSubjectBtn.addEventListener('click', openDeleteSubjectModal);
+if (closeDeleteSubjectBtn) closeDeleteSubjectBtn.addEventListener('click', closeDeleteSubjectModal);
+if (cancelDeleteSubjectBtn) cancelDeleteSubjectBtn.addEventListener('click', closeDeleteSubjectModal);
+
+if (confirmDeleteSubjectBtn) {
+  confirmDeleteSubjectBtn.addEventListener('click', async () => {
+    try {
+      confirmDeleteSubjectBtn.disabled = true;
+      confirmDeleteSubjectBtn.textContent = 'Deleting...';
+      const res = await fetch(`${API_BASE}/api/subjects/${subjectId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || 'Failed to delete subject.');
+      }
+      localStorage.removeItem('subject_data_' + subjectId);
+      localStorage.removeItem('materials_list_' + subjectId);
+      localStorage.removeItem('active_material_' + subjectId);
+      localStorage.removeItem('latest_study_pack_for_subject_' + subjectId);
+      showToast('Subject deleted. Redirecting to dashboard...', 'success');
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 800);
+    } catch (err) {
+      deleteSubjectError.textContent = err.message;
+      deleteSubjectError.classList.remove('hidden');
+      confirmDeleteSubjectBtn.disabled = false;
+      confirmDeleteSubjectBtn.textContent = 'Delete Subject';
     }
   });
 }

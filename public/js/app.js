@@ -172,8 +172,18 @@ async function fetchSubjects() {
 
       card.innerHTML = `
         <div>
-          <div class="w-9 h-9 rounded-xl ${colorScheme.iconBg} flex items-center justify-center mb-3">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <div class="flex items-start justify-between mb-3">
+            <div class="w-9 h-9 rounded-xl ${colorScheme.iconBg} flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+            <div class="flex items-center space-x-1">
+              <button class="edit-subject-card-btn p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition cursor-pointer" title="Edit Subject">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+              </button>
+              <button class="delete-subject-card-btn p-1.5 rounded-lg text-rose-400 hover:text-rose-200 hover:bg-rose-500/20 transition cursor-pointer" title="Delete Subject">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              </button>
+            </div>
           </div>
           <h4 class="text-sm font-bold text-white tracking-tight leading-snug">${escapeHtml(sub.name)}</h4>
           <p class="text-3xs text-[#A5B4FC] mt-0.5">${topicsCount} Topics • ${notesCount} Notes</p>
@@ -189,6 +199,22 @@ async function fetchSubjects() {
           </div>
         </div>
       `;
+
+      const editBtn = card.querySelector('.edit-subject-card-btn');
+      if (editBtn) {
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openEditSubjectModal(sub);
+        });
+      }
+
+      const deleteBtn = card.querySelector('.delete-subject-card-btn');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openDeleteSubjectModal(sub);
+        });
+      }
 
       card.addEventListener('click', () => {
         window.location.href = `subject.html?subject_id=${sub.id}`;
@@ -903,3 +929,119 @@ window.addEventListener('DOMContentLoaded', async () => {
     fetchCalendarEvents(),
   ]);
 });
+
+// =============================================================================
+// Edit & Delete Subject Modal Handlers (Dashboard)
+// =============================================================================
+const editSubModal = document.getElementById('edit-subject-modal');
+const closeEditSubBtn = document.getElementById('close-edit-subject-btn');
+const cancelEditSubBtn = document.getElementById('cancel-edit-subject-btn');
+const editSubForm = document.getElementById('edit-subject-form');
+const editSubId = document.getElementById('edit-subject-id');
+const editSubName = document.getElementById('edit-subject-name');
+const editSubDesc = document.getElementById('edit-subject-desc');
+const editSubErr = document.getElementById('edit-subject-error');
+
+function openEditSubjectModal(sub) {
+  if (!editSubModal || !sub) return;
+  editSubId.value = sub.id;
+  editSubName.value = sub.name || '';
+  editSubDesc.value = sub.description || '';
+  if (editSubErr) editSubErr.classList.add('hidden');
+  editSubModal.classList.remove('hidden');
+  editSubName.focus();
+}
+
+function closeEditSubjectModal() {
+  if (editSubModal) editSubModal.classList.add('hidden');
+}
+
+if (closeEditSubBtn) closeEditSubBtn.addEventListener('click', closeEditSubjectModal);
+if (cancelEditSubBtn) cancelEditSubBtn.addEventListener('click', closeEditSubjectModal);
+
+if (editSubForm) {
+  editSubForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = editSubId.value;
+    const name = editSubName.value.trim();
+    const description = editSubDesc.value.trim();
+    if (!id || !name) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/subjects/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description: description || null })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed to update subject.');
+
+      localStorage.setItem('subject_data_' + id, JSON.stringify(data));
+      closeEditSubjectModal();
+      showToast(`Subject updated to "${data.name}"!`, 'success');
+      await fetchSubjects();
+    } catch (err) {
+      if (editSubErr) {
+        editSubErr.textContent = err.message;
+        editSubErr.classList.remove('hidden');
+      }
+    }
+  });
+}
+
+const deleteSubModal = document.getElementById('delete-subject-modal');
+const closeDeleteSubBtn = document.getElementById('close-delete-subject-btn');
+const cancelDeleteSubBtn = document.getElementById('cancel-delete-subject-btn');
+const confirmDeleteSubBtn = document.getElementById('confirm-delete-subject-btn');
+const deleteSubNamePreview = document.getElementById('delete-subject-name-preview');
+const deleteSubId = document.getElementById('delete-subject-id');
+const deleteSubErr = document.getElementById('delete-subject-error');
+
+function openDeleteSubjectModal(sub) {
+  if (!deleteSubModal || !sub) return;
+  deleteSubId.value = sub.id;
+  deleteSubNamePreview.textContent = sub.name || 'this subject';
+  if (deleteSubErr) deleteSubErr.classList.add('hidden');
+  deleteSubModal.classList.remove('hidden');
+}
+
+function closeDeleteSubjectModal() {
+  if (deleteSubModal) deleteSubModal.classList.add('hidden');
+}
+
+if (closeDeleteSubBtn) closeDeleteSubBtn.addEventListener('click', closeDeleteSubjectModal);
+if (cancelDeleteSubBtn) cancelDeleteSubBtn.addEventListener('click', closeDeleteSubjectModal);
+
+if (confirmDeleteSubBtn) {
+  confirmDeleteSubBtn.addEventListener('click', async () => {
+    const id = deleteSubId.value;
+    if (!id) return;
+
+    try {
+      confirmDeleteSubBtn.disabled = true;
+      confirmDeleteSubBtn.textContent = 'Deleting...';
+      const res = await fetch(`${API_BASE}/api/subjects/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || 'Failed to delete subject.');
+      }
+
+      localStorage.removeItem('subject_data_' + id);
+      localStorage.removeItem('materials_list_' + id);
+      localStorage.removeItem('active_material_' + id);
+      localStorage.removeItem('latest_study_pack_for_subject_' + id);
+      
+      closeDeleteSubjectModal();
+      showToast('Subject deleted successfully.', 'success');
+      await fetchSubjects();
+    } catch (err) {
+      if (deleteSubErr) {
+        deleteSubErr.textContent = err.message;
+        deleteSubErr.classList.remove('hidden');
+      }
+    } finally {
+      confirmDeleteSubBtn.disabled = false;
+      confirmDeleteSubBtn.textContent = 'Delete Subject';
+    }
+  });
+}
