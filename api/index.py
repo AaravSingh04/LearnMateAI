@@ -7,6 +7,12 @@ if str(ROOT_DIR) not in sys.path:
 
 try:
     from backend.main import app
+
+    @app.get("/api/ping")
+    @app.get("/ping")
+    def ping():
+        return {"status": "ok", "ping": "pong"}
+
     handler = app
 except Exception as e:
     import traceback
