@@ -1,7 +1,7 @@
 """Database setup and connection management for LearnMate AI.
 
 Provides seamless dual-mode connectivity:
-1. Turso Cloud LibSQL (Permanent Cloud Database for Vercel/Production via Pure Sync HTTP)
+1. Turso Cloud LibSQL (Permanent Cloud Database for Vercel/Production via Pure Sync HTTP Pipeline)
 2. Local SQLite with row factory and foreign key enforcement (Development/Offline Fallback)
 """
 
@@ -49,11 +49,59 @@ def ensure_directories() -> None:
         print(f"Notice: Directory creation warning: {e}")
 
 
-class SyncTursoHttpClient:
+class TursoRow(dict):
+    """Dictionary-like row that also supports integer indexing like sqlite3.Row."""
+
+    def __init__(self, cols, values):
+        super().__init__()
+        self._values = values
+        self._cols = cols
+        for col, val in zip(cols, values):
+            self[col] = val
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self._values[item]
+        return super().__getitem__(item)
+
+
+def _parse_turso_value(v):
+    if not isinstance(v, dict):
+        return v
+    t = v.get("type")
+    if t == "null":
+        return None
+    elif t == "integer":
+        return int(v["value"])
+    elif t == "float":
+        return float(v["value"])
+    elif t == "text":
+        return str(v["value"])
+    elif t == "blob":
+        return base64.b64decode(v.get("base64", ""))
+    return v.get("value")
+
+
+def _format_turso_arg(arg):
+    if arg is None:
+        return {"type": "null"}
+    elif isinstance(arg, bool):
+        return {"type": "integer", "value": "1" if arg else "0"}
+    elif isinstance(arg, int):
+        return {"type": "integer", "value": str(arg)}
+    elif isinstance(arg, float):
+        return {"type": "float", "value": arg}
+    elif isinstance(arg, (bytes, bytearray)):
+        return {"type": "blob", "base64": base64.b64encode(arg).decode("ascii")}
+    else:
+        return {"type": "text", "value": str(arg)}
+
+
+class PureTursoHttpClient:
     """Pure synchronous HTTP client for Turso Cloud LibSQL database.
     
-    Uses standard library urllib without background threads or async event loops,
-    ensuring 100% reliability on serverless platforms (Vercel / AWS Lambda).
+    Zero dependencies beyond Python's standard library (no aiohttp, no background threads),
+    ensuring 100% stability and zero deadlocks on Vercel Serverless / AWS Lambda.
     """
 
     def __init__(self, url: str, auth_token: str):
@@ -66,17 +114,27 @@ class SyncTursoHttpClient:
         self.auth_token = auth_token
 
     def execute(self, sql: str, params=None):
-        from libsql_client.hrana.convert import _stmt_to_proto, _result_set_from_proto
-
         if params is None:
             params = []
         elif isinstance(params, tuple):
             params = list(params)
 
-        stmt_proto = _stmt_to_proto(sql, params)
-        payload = json.dumps({"stmt": stmt_proto}).encode("utf-8")
-        req_url = urllib.parse.urljoin(self.base_url, "v1/execute")
+        args_proto = [_format_turso_arg(p) for p in params]
+        payload = json.dumps({
+            "requests": [
+                {
+                    "type": "execute",
+                    "stmt": {
+                        "sql": sql,
+                        "args": args_proto,
+                        "want_rows": True
+                    }
+                },
+                {"type": "close"}
+            ]
+        }).encode("utf-8")
 
+        req_url = urllib.parse.urljoin(self.base_url, "v2/pipeline")
         req = urllib.request.Request(
             req_url,
             data=payload,
@@ -87,53 +145,67 @@ class SyncTursoHttpClient:
             method="POST",
         )
 
-        with urllib.request.urlopen(req, timeout=12) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             res_json = json.loads(response.read().decode("utf-8"))
-            if "error" in res_json and res_json["error"]:
-                raise RuntimeError(res_json["error"].get("message", "Turso query execution error"))
-            return _result_set_from_proto(res_json["result"])
+            results = res_json.get("results", [])
+            if not results:
+                raise RuntimeError("Empty response from Turso")
+
+            first_res = results[0]
+            if first_res.get("type") == "error":
+                raise RuntimeError(first_res.get("error", {}).get("message", "Turso query execution error"))
+
+            exec_res = first_res.get("response", {}).get("result", {})
+            cols = [c.get("name") or "" for c in exec_res.get("cols", [])]
+            rows = [
+                TursoRow(cols, [_parse_turso_value(val) for val in r])
+                for r in exec_res.get("rows", [])
+            ]
+            affected = exec_res.get("affected_row_count", 0)
+            last_id_str = exec_res.get("last_insert_rowid")
+            last_id = int(last_id_str) if last_id_str is not None else None
+            return cols, rows, affected, last_id
 
 
 class TursoCursor:
-    """Cursor adapter wrapping SyncTursoHttpClient ResultSet for sqlite3 compatibility."""
+    """Cursor adapter wrapping PureTursoHttpClient for sqlite3 compatibility."""
 
-    def __init__(self, client: SyncTursoHttpClient):
+    def __init__(self, client: PureTursoHttpClient):
         self.client = client
-        self._result = None
+        self.cols = []
+        self._rows = []
         self._idx = 0
         self.lastrowid = None
         self.rowcount = 0
 
     def execute(self, sql: str, params=None):
-        if params is None:
-            params = []
-        elif isinstance(params, tuple):
-            params = list(params)
-        self._result = self.client.execute(sql, params)
-        self.lastrowid = self._result.last_insert_rowid
-        self.rowcount = self._result.rows_affected
+        cols, rows, affected, last_id = self.client.execute(sql, params)
+        self.cols = cols
+        self._rows = rows
+        self.rowcount = affected
+        self.lastrowid = last_id
         self._idx = 0
         return self
 
     def fetchone(self):
-        if not self._result or self._idx >= len(self._result.rows):
+        if not self._rows or self._idx >= len(self._rows):
             return None
-        row = self._result.rows[self._idx]
+        row = self._rows[self._idx]
         self._idx += 1
         return row
 
     def fetchall(self):
-        if not self._result:
+        if not self._rows:
             return []
-        rows = self._result.rows[self._idx:]
-        self._idx = len(self._result.rows)
+        rows = self._rows[self._idx:]
+        self._idx = len(self._rows)
         return rows
 
 
 class TursoConnection:
-    """Connection adapter wrapping SyncTursoHttpClient for sqlite3 compatibility."""
+    """Connection adapter wrapping PureTursoHttpClient for sqlite3 compatibility."""
 
-    def __init__(self, client: SyncTursoHttpClient):
+    def __init__(self, client: PureTursoHttpClient):
         self.client = client
 
     def cursor(self):
@@ -368,7 +440,7 @@ def get_db_connection():
     """Create and return a database connection.
     
     If TURSO_DATABASE_URL and TURSO_AUTH_TOKEN are set, connects to Turso Cloud LibSQL
-    via pure synchronous HTTP for 100% permanent cloud persistence across serverless cold starts.
+    via pure synchronous HTTP pipeline for 100% permanent cloud persistence across serverless cold starts.
     If Turso is not configured or encounters network errors, seamlessly falls back to local SQLite.
     """
     global _db_initialized
@@ -378,7 +450,7 @@ def get_db_connection():
 
     if turso_url and turso_token:
         try:
-            client = SyncTursoHttpClient(turso_url, turso_token)
+            client = PureTursoHttpClient(turso_url, turso_token)
             conn = TursoConnection(client)
             if not _db_initialized:
                 conn.execute("SELECT 1;")
