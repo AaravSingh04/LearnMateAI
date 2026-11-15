@@ -7,6 +7,7 @@ Serves the student-friendly frontend directly from the project directory.
 
 import json
 from pathlib import Path
+import base64
 from typing import List, Optional
 from contextlib import asynccontextmanager
 
@@ -14,7 +15,7 @@ from pydantic import BaseModel
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, status, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from backend.database import get_db_connection, init_db, UPLOADS_DIR, PROJECT_ROOT
@@ -399,6 +400,8 @@ async def upload_material(subject_id: int, file: UploadFile = File(...)):
                 detail=f"An unexpected error occurred while processing the file: {str(exc)}"
             )
 
+        file_b64 = base64.b64encode(file_bytes).decode('ascii') if file_size <= 25 * 1024 * 1024 else ""
+
         # Check if a material with the same filename already exists for this subject
         cursor.execute(
             "SELECT id, stored_filename FROM materials WHERE subject_id = ? AND original_filename = ?",
@@ -417,10 +420,10 @@ async def upload_material(subject_id: int, file: UploadFile = File(...)):
                 """
                 UPDATE materials
                 SET stored_filename = ?, file_type = ?, uploaded_at = datetime('now'),
-                    extracted_text = ?, processing_status = ?
+                    extracted_text = ?, processing_status = ?, file_base64 = ?
                 WHERE id = ?;
                 """,
-                (stored_filename, ext, extracted_text, processing_status, material_id),
+                (stored_filename, ext, extracted_text, processing_status, file_b64, material_id),
             )
             conn.commit()
 
@@ -432,11 +435,11 @@ async def upload_material(subject_id: int, file: UploadFile = File(...)):
                 """
                 INSERT INTO materials (
                     subject_id, original_filename, stored_filename, file_type,
-                    uploaded_at, extracted_text, processing_status
+                    uploaded_at, extracted_text, processing_status, file_base64
                 )
-                VALUES (?, ?, ?, ?, datetime('now'), ?, ?);
+                VALUES (?, ?, ?, ?, datetime('now'), ?, ?, ?);
                 """,
-                (subject_id, original_filename, stored_filename, ext, extracted_text, processing_status),
+                (subject_id, original_filename, stored_filename, ext, extracted_text, processing_status, file_b64),
             )
             material_id = cursor.lastrowid
             conn.commit()
@@ -1844,3 +1847,38 @@ if FRONTEND_DIR.exists():
     if js_dir.exists():
         app.mount("/js", StaticFiles(directory=str(js_dir)), name="js")
 
+
+
+@app.get("/api/materials/{material_id}/download", tags=["Materials"])
+def download_material_file(material_id: int):
+    """Download the original uploaded presentation or document file."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT original_filename, file_type, file_base64, stored_filename FROM materials WHERE id = ?", (material_id,))
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Material not found")
+        
+        # 1. Try reading from local storage
+        local_path = UPLOADS_DIR / row["stored_filename"]
+        if local_path.exists() and local_path.is_file():
+            return FileResponse(local_path, filename=row["original_filename"])
+            
+        # 2. Decode from cloud database backup
+        try:
+            b64_val = row["file_base64"]
+        except Exception:
+            b64_val = None
+
+        if b64_val:
+            data = base64.b64decode(b64_val)
+            return Response(
+                content=data,
+                media_type="application/octet-stream",
+                headers={"Content-Disposition": f'attachment; filename="{row["original_filename"]}"'}
+            )
+            
+        raise HTTPException(status_code=404, detail="File content not found.")
+    finally:
+        conn.close()
