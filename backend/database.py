@@ -28,16 +28,30 @@ else:
     load_dotenv()
 
 # Detect serverless environment (Vercel, AWS Lambda) where project root is read-only
-IS_SERVERLESS = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+IS_SERVERLESS = bool(
+    os.environ.get("VERCEL")
+    or os.environ.get("VERCEL_ENV")
+    or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")
+    or os.environ.get("LAMBDA_TASK_ROOT")
+)
 
-if IS_SERVERLESS:
-    DATA_DIR = Path("/tmp/data")
-    DB_PATH = DATA_DIR / "learnmate.db"
-    UPLOADS_DIR = DATA_DIR / "uploads"
-else:
-    DATA_DIR = PROJECT_ROOT / "data"
-    DB_PATH = DATA_DIR / "learnmate.db"
-    UPLOADS_DIR = DATA_DIR / "uploads"
+def _determine_data_dir() -> Path:
+    if IS_SERVERLESS:
+        return Path("/tmp/data")
+    try:
+        local_data = PROJECT_ROOT / "data"
+        local_data.mkdir(parents=True, exist_ok=True)
+        test_file = local_data / ".writable_test"
+        test_file.touch()
+        test_file.unlink()
+        return local_data
+    except Exception:
+        import tempfile
+        return Path(tempfile.gettempdir()) / "learnmate_data"
+
+DATA_DIR = _determine_data_dir()
+DB_PATH = DATA_DIR / "learnmate.db"
+UPLOADS_DIR = DATA_DIR / "uploads"
 
 
 def ensure_directories() -> None:

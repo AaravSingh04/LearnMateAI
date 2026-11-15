@@ -73,6 +73,7 @@ app = FastAPI(
     title="LearnMate AI API",
     description="Backend API for personal learning hub and AI study packs",
     version="1.0.0",
+    debug=True,
     lifespan=lifespan,
 )
 
@@ -113,6 +114,35 @@ def health_check():
     """Health check endpoint for system monitoring."""
     return {"status": "ok", "app": "LearnMate AI"}
 
+
+@app.get("/api/debug-error", tags=["Health"])
+@app.get("/debug-error", tags=["Health"])
+def debug_error():
+    import traceback
+    import os
+    res = {
+        "turso_url_set": bool(os.environ.get("TURSO_DATABASE_URL")),
+        "turso_token_set": bool(os.environ.get("TURSO_AUTH_TOKEN")),
+        "is_serverless": bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.environ.get("VERCEL_ENV")),
+    }
+    try:
+        conn = get_db_connection()
+        res["connection_type"] = type(conn).__name__
+        cur = conn.cursor()
+        cur.execute("SELECT 1 AS ok;")
+        row = cur.fetchone()
+        res["query_ok"] = True
+        res["test_row"] = dict(row) if hasattr(row, "keys") else str(row)
+        
+        cur.execute("SELECT COUNT(*) AS cnt FROM subjects;")
+        sub_row = cur.fetchone()
+        res["subjects_count"] = sub_row["cnt"] if sub_row else 0
+        conn.close()
+    except Exception as e:
+        res["error"] = str(e)
+        res["traceback"] = traceback.format_exc()
+    return res
+
 FRONTEND_DIR = PROJECT_ROOT / "frontend"
 if not FRONTEND_DIR.exists() and (PROJECT_ROOT / "public").exists():
     FRONTEND_DIR = PROJECT_ROOT / "public"
@@ -136,7 +166,12 @@ def remove_stored_file(stored_filename: str) -> None:
 @app.get("/api/subjects", response_model=List[SubjectResponse], tags=["Subjects"])
 def list_subjects():
     """Return all subjects ordered alphabetically by name, with material counts and progress."""
-    conn = get_db_connection()
+    try:
+        conn = get_db_connection()
+    except Exception as exc:
+        print(f"Notice: Could not connect to DB in list_subjects: {exc}")
+        return []
+
     try:
         cursor = conn.cursor()
         cursor.execute(
@@ -175,8 +210,14 @@ def list_subjects():
                 )
             )
         return result
+    except Exception as exc:
+        print(f"Notice: Query failed in list_subjects: {exc}")
+        return []
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 @app.post("/api/subjects", response_model=SubjectResponse, status_code=status.HTTP_201_CREATED, tags=["Subjects"])
@@ -189,8 +230,8 @@ def create_subject(payload: SubjectCreate):
             detail="Subject name cannot be empty."
         )
 
-    conn = get_db_connection()
     try:
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT id FROM subjects WHERE LOWER(name) = LOWER(?)", (trimmed_name,))
         if cursor.fetchone():
@@ -219,8 +260,19 @@ def create_subject(payload: SubjectCreate):
             updated_at=created["updated_at"],
             materials_count=0,
         )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        print(f"Error creating subject: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error saving subject to database: {str(exc)}"
+        )
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 @app.get("/api/subjects/{subject_id}", response_model=SubjectResponse, tags=["Subjects"])
@@ -1893,31 +1945,3 @@ def download_material_file(material_id: int):
         raise HTTPException(status_code=404, detail="File content not found.")
     finally:
         conn.close()
-
-
-@app.get("/api/debug-error")
-def debug_error():
-    import traceback
-    import os
-    res = {
-        "turso_url_set": bool(os.environ.get("TURSO_DATABASE_URL")),
-        "turso_token_set": bool(os.environ.get("TURSO_AUTH_TOKEN")),
-        "is_serverless": bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")),
-    }
-    try:
-        conn = get_db_connection()
-        res["connection_type"] = type(conn).__name__
-        cur = conn.cursor()
-        cur.execute("SELECT 1 AS ok;")
-        row = cur.fetchone()
-        res["query_ok"] = True
-        res["row"] = dict(row) if hasattr(row, "keys") else str(row)
-        
-        cur.execute("SELECT COUNT(*) AS cnt FROM subjects;")
-        sub_row = cur.fetchone()
-        res["subjects_count"] = sub_row["cnt"] if sub_row else 0
-        conn.close()
-    except Exception as e:
-        res["error"] = str(e)
-        res["traceback"] = traceback.format_exc()
-    return res
