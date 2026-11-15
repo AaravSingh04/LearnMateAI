@@ -638,7 +638,15 @@ async function sendAssistantMessage() {
       body: JSON.stringify({ query }),
     });
 
-    const data = await res.json();
+    let data = {};
+    const _rawText = await res.text();
+    try {
+      data = JSON.parse(_rawText);
+    } catch (_jsonErr) {
+      if (!res.ok) {
+        throw new Error(`Request error (${res.status}): ${_rawText.slice(0, 120)}`);
+      }
+    }
     const loadingEl = document.getElementById(loadingId);
     if (loadingEl) loadingEl.remove();
 
@@ -846,7 +854,15 @@ addSubForm.addEventListener('submit', async (e) => {
       body: JSON.stringify({ name, description: description || null }),
     });
 
-    const data = await res.json();
+    let data = {};
+    const _rawText = await res.text();
+    try {
+      data = JSON.parse(_rawText);
+    } catch (_jsonErr) {
+      if (!res.ok) {
+        throw new Error(`Request error (${res.status}): ${_rawText.slice(0, 120)}`);
+      }
+    }
     if (!res.ok) throw new Error(data.detail || 'Failed to create subject.');
 
     addSubModal.classList.add('hidden');

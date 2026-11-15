@@ -504,7 +504,15 @@ uploadForm.addEventListener('submit', async (e) => {
       body: formData,
     });
 
-    const data = await res.json();
+    let data = {};
+    const _rawText = await res.text();
+    try {
+      data = JSON.parse(_rawText);
+    } catch (_jsonErr) {
+      if (!res.ok) {
+        throw new Error(`Request error (${res.status}): ${_rawText.slice(0, 120)}`);
+      }
+    }
     if (!res.ok) {
       throw new Error(data.detail || 'File upload failed.');
     }
@@ -801,7 +809,15 @@ generatePackBtn.addEventListener('click', async () => {
     });
 
     clearInterval(stepTimer);
-    const data = await res.json();
+    let data = {};
+    const _rawText = await res.text();
+    try {
+      data = JSON.parse(_rawText);
+    } catch (_jsonErr) {
+      if (!res.ok) {
+        throw new Error(`Request error (${res.status}): ${_rawText.slice(0, 120)}`);
+      }
+    }
 
     if (!res.ok) {
       if (res.status === 503 || (data.detail && data.detail.includes('AI is not configured'))) {
@@ -1653,7 +1669,15 @@ confirmDeleteMatBtn.addEventListener('click', async () => {
     });
 
     if (!res.ok) {
-      const data = await res.json();
+      let data = {};
+    const _rawText = await res.text();
+    try {
+      data = JSON.parse(_rawText);
+    } catch (_jsonErr) {
+      if (!res.ok) {
+        throw new Error(`Request error (${res.status}): ${_rawText.slice(0, 120)}`);
+      }
+    }
       throw new Error(data.detail || 'Could not delete material.');
     }
 
@@ -1742,7 +1766,15 @@ if (addSubForm) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, description: description || null }),
       });
-      const data = await res.json();
+      let data = {};
+    const _rawText = await res.text();
+    try {
+      data = JSON.parse(_rawText);
+    } catch (_jsonErr) {
+      if (!res.ok) {
+        throw new Error(`Request error (${res.status}): ${_rawText.slice(0, 120)}`);
+      }
+    }
       if (!res.ok) throw new Error(data.detail || 'Failed to create subject.');
       if (addSubModal) addSubModal.classList.add('hidden');
       showToast(`Subject "${data.name}" created! Opening workspace...`, 'success');

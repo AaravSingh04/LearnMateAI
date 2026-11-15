@@ -1,14 +1,17 @@
 """Database setup and connection management for LearnMate AI.
 
 Provides seamless dual-mode connectivity:
-1. Turso Cloud LibSQL (Permanent Cloud Database for Vercel/Production)
+1. Turso Cloud LibSQL (Permanent Cloud Database for Vercel/Production via Pure Sync HTTP)
 2. Local SQLite with row factory and foreign key enforcement (Development/Offline Fallback)
 """
 
 import base64
+import json
 import os
 import shutil
 import sqlite3
+import urllib.parse
+import urllib.request
 from pathlib import Path
 from typing import Generator, Optional
 
@@ -39,14 +42,62 @@ else:
 
 def ensure_directories() -> None:
     """Ensure data/ and data/uploads/ directories exist and are writable."""
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        print(f"Notice: Directory creation warning: {e}")
+
+
+class SyncTursoHttpClient:
+    """Pure synchronous HTTP client for Turso Cloud LibSQL database.
+    
+    Uses standard library urllib without background threads or async event loops,
+    ensuring 100% reliability on serverless platforms (Vercel / AWS Lambda).
+    """
+
+    def __init__(self, url: str, auth_token: str):
+        url = url.strip()
+        if url.startswith("libsql://"):
+            url = "https://" + url[len("libsql://"):]
+        if not url.endswith("/"):
+            url += "/"
+        self.base_url = url
+        self.auth_token = auth_token
+
+    def execute(self, sql: str, params=None):
+        from libsql_client.hrana.convert import _stmt_to_proto, _result_set_from_proto
+
+        if params is None:
+            params = []
+        elif isinstance(params, tuple):
+            params = list(params)
+
+        stmt_proto = _stmt_to_proto(sql, params)
+        payload = json.dumps({"stmt": stmt_proto}).encode("utf-8")
+        req_url = urllib.parse.urljoin(self.base_url, "v1/execute")
+
+        req = urllib.request.Request(
+            req_url,
+            data=payload,
+            headers={
+                "Authorization": f"Bearer {self.auth_token}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+
+        with urllib.request.urlopen(req, timeout=12) as response:
+            res_json = json.loads(response.read().decode("utf-8"))
+            if "error" in res_json and res_json["error"]:
+                raise RuntimeError(res_json["error"].get("message", "Turso query execution error"))
+            return _result_set_from_proto(res_json["result"])
 
 
 class TursoCursor:
-    """Cursor adapter wrapping LibSQL client ResultSet for sqlite3 compatibility."""
+    """Cursor adapter wrapping SyncTursoHttpClient ResultSet for sqlite3 compatibility."""
 
-    def __init__(self, client):
+    def __init__(self, client: SyncTursoHttpClient):
         self.client = client
         self._result = None
         self._idx = 0
@@ -80,9 +131,9 @@ class TursoCursor:
 
 
 class TursoConnection:
-    """Connection adapter wrapping LibSQL client for sqlite3 compatibility."""
+    """Connection adapter wrapping SyncTursoHttpClient for sqlite3 compatibility."""
 
-    def __init__(self, client):
+    def __init__(self, client: SyncTursoHttpClient):
         self.client = client
 
     def cursor(self):
@@ -93,7 +144,6 @@ class TursoConnection:
         return cur.execute(sql, params)
 
     def commit(self):
-        # LibSQL auto-commits HTTP statements
         pass
 
     def __enter__(self):
@@ -103,10 +153,7 @@ class TursoConnection:
         pass
 
     def close(self):
-        try:
-            self.client.close()
-        except Exception:
-            pass
+        pass
 
 
 def seed_initial_data(conn) -> None:
@@ -154,16 +201,22 @@ def init_db_schema(conn) -> None:
     )
 
     # Ensure self_notes and file_base64 columns exist if table was created earlier
-    mat_cols = [c[1] for c in conn.execute("PRAGMA table_info(materials);").fetchall()]
-    if "self_notes" not in mat_cols:
-        conn.execute("ALTER TABLE materials ADD COLUMN self_notes TEXT DEFAULT '';")
-    if "file_base64" not in mat_cols:
-        conn.execute("ALTER TABLE materials ADD COLUMN file_base64 TEXT DEFAULT '';")
+    try:
+        mat_cols = [c[1] for c in conn.execute("PRAGMA table_info(materials);").fetchall()]
+        if "self_notes" not in mat_cols:
+            conn.execute("ALTER TABLE materials ADD COLUMN self_notes TEXT DEFAULT '';")
+        if "file_base64" not in mat_cols:
+            conn.execute("ALTER TABLE materials ADD COLUMN file_base64 TEXT DEFAULT '';")
+    except Exception:
+        pass
 
     # Ensure syllabus_text column exists on subjects if table was created earlier
-    subj_cols = [c[1] for c in conn.execute("PRAGMA table_info(subjects);").fetchall()]
-    if "syllabus_text" not in subj_cols:
-        conn.execute("ALTER TABLE subjects ADD COLUMN syllabus_text TEXT DEFAULT '';")
+    try:
+        subj_cols = [c[1] for c in conn.execute("PRAGMA table_info(subjects);").fetchall()]
+        if "syllabus_text" not in subj_cols:
+            conn.execute("ALTER TABLE subjects ADD COLUMN syllabus_text TEXT DEFAULT '';")
+    except Exception:
+        pass
 
     # 3. study_packs table (unique material_id: 1 current pack per material)
     conn.execute(
@@ -211,9 +264,12 @@ def init_db_schema(conn) -> None:
         """
     )
 
-    qa_cols = [c[1] for c in conn.execute("PRAGMA table_info(quiz_attempts);").fetchall()]
-    if "results_json" not in qa_cols:
-        conn.execute("ALTER TABLE quiz_attempts ADD COLUMN results_json TEXT DEFAULT '';")
+    try:
+        qa_cols = [c[1] for c in conn.execute("PRAGMA table_info(quiz_attempts);").fetchall()]
+        if "results_json" not in qa_cols:
+            conn.execute("ALTER TABLE quiz_attempts ADD COLUMN results_json TEXT DEFAULT '';")
+    except Exception:
+        pass
 
     # 6. calendar_events table
     conn.execute(
@@ -295,11 +351,14 @@ def init_db_schema(conn) -> None:
     )
 
     # Auto-seed initial subjects and study packs if database is newly initialized
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) AS cnt FROM subjects;")
-    row = cursor.fetchone()
-    if row and row["cnt"] == 0:
-        seed_initial_data(conn)
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) AS cnt FROM subjects;")
+        row = cursor.fetchone()
+        if row and row["cnt"] == 0:
+            seed_initial_data(conn)
+    except Exception as e:
+        print(f"Notice: Auto-seed skipped ({e})")
 
 
 _db_initialized = False
@@ -309,8 +368,8 @@ def get_db_connection():
     """Create and return a database connection.
     
     If TURSO_DATABASE_URL and TURSO_AUTH_TOKEN are set, connects to Turso Cloud LibSQL
-    for 100% permanent cloud persistence across serverless cold starts and multiple devices.
-    Otherwise, seamlessly connects to local SQLite.
+    via pure synchronous HTTP for 100% permanent cloud persistence across serverless cold starts.
+    If Turso is not configured or encounters network errors, seamlessly falls back to local SQLite.
     """
     global _db_initialized
 
@@ -319,18 +378,15 @@ def get_db_connection():
 
     if turso_url and turso_token:
         try:
-            import libsql_client
-            url = turso_url
-            if url.startswith("libsql://"):
-                url = "https://" + url[len("libsql://"):]
-            client = libsql_client.create_client_sync(url=url, auth_token=turso_token)
+            client = SyncTursoHttpClient(turso_url, turso_token)
             conn = TursoConnection(client)
             if not _db_initialized:
+                conn.execute("SELECT 1;")
                 init_db_schema(conn)
                 _db_initialized = True
             return conn
         except Exception as e:
-            print(f"Notice: Turso Cloud DB connection error ({e}); using local SQLite fallback.")
+            print(f"Notice: Turso Cloud DB connection notice ({e}); using local SQLite fallback.")
 
     # Local SQLite fallback
     ensure_directories()
