@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, status, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, Response, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.database import get_db_connection, init_db, UPLOADS_DIR, PROJECT_ROOT
@@ -75,6 +75,17 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    import traceback
+    tb = traceback.format_exc()
+    print("GLOBAL UNHANDLED ERROR:", tb)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc), "traceback": tb}
+    )
 
 # Enable CORS for local development flexibility
 app.add_middleware(
