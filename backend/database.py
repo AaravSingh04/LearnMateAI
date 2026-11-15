@@ -105,9 +105,12 @@ class PureTursoHttpClient:
     """
 
     def __init__(self, url: str, auth_token: str):
-        url = url.strip()
+        url = url.strip().strip("'").strip('"')
+        auth_token = auth_token.strip().strip("'").strip('"')
         if url.startswith("libsql://"):
             url = "https://" + url[len("libsql://"):]
+        elif not (url.startswith("http://") or url.startswith("https://")):
+            url = "https://" + url
         if not url.endswith("/"):
             url += "/"
         self.base_url = url
@@ -145,26 +148,37 @@ class PureTursoHttpClient:
             method="POST",
         )
 
-        with urllib.request.urlopen(req, timeout=10) as response:
-            res_json = json.loads(response.read().decode("utf-8"))
-            results = res_json.get("results", [])
-            if not results:
-                raise RuntimeError("Empty response from Turso")
+        try:
+            with urllib.request.urlopen(req, timeout=12) as response:
+                res_json = json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as he:
+            err_body = ""
+            try:
+                err_body = he.read().decode("utf-8")
+            except Exception:
+                pass
+            raise RuntimeError(f"Turso HTTP {he.code}: {he.reason}. {err_body}".strip()) from he
+        except urllib.error.URLError as ue:
+            raise RuntimeError(f"Turso network error: {ue.reason}") from ue
 
-            first_res = results[0]
-            if first_res.get("type") == "error":
-                raise RuntimeError(first_res.get("error", {}).get("message", "Turso query execution error"))
+        results = res_json.get("results", [])
+        if not results:
+            raise RuntimeError("Empty response from Turso")
 
-            exec_res = first_res.get("response", {}).get("result", {})
-            cols = [c.get("name") or "" for c in exec_res.get("cols", [])]
-            rows = [
-                TursoRow(cols, [_parse_turso_value(val) for val in r])
-                for r in exec_res.get("rows", [])
-            ]
-            affected = exec_res.get("affected_row_count", 0)
-            last_id_str = exec_res.get("last_insert_rowid")
-            last_id = int(last_id_str) if last_id_str is not None else None
-            return cols, rows, affected, last_id
+        first_res = results[0]
+        if first_res.get("type") == "error":
+            raise RuntimeError(first_res.get("error", {}).get("message", "Turso query execution error"))
+
+        exec_res = first_res.get("response", {}).get("result", {})
+        cols = [c.get("name") or "" for c in exec_res.get("cols", [])]
+        rows = [
+            TursoRow(cols, [_parse_turso_value(val) for val in r])
+            for r in exec_res.get("rows", [])
+        ]
+        affected = exec_res.get("affected_row_count", 0)
+        last_id_str = exec_res.get("last_insert_rowid")
+        last_id = int(last_id_str) if last_id_str is not None else None
+        return cols, rows, affected, last_id
 
 
 class TursoCursor:
@@ -179,7 +193,19 @@ class TursoCursor:
         self.rowcount = 0
 
     def execute(self, sql: str, params=None):
-        cols, rows, affected, last_id = self.client.execute(sql, params)
+        try:
+            cols, rows, affected, last_id = self.client.execute(sql, params)
+        except Exception as exc:
+            err_msg = str(exc).lower()
+            if "no such table" in err_msg:
+                # Self-healing: if a table is missing, initialize schema and retry once
+                try:
+                    init_db_schema(TursoConnection(self.client))
+                    cols, rows, affected, last_id = self.client.execute(sql, params)
+                except Exception:
+                    raise exc
+            else:
+                raise exc
         self.cols = cols
         self._rows = rows
         self.rowcount = affected
@@ -216,6 +242,9 @@ class TursoConnection:
         return cur.execute(sql, params)
 
     def commit(self):
+        pass
+
+    def rollback(self):
         pass
 
     def __enter__(self):
@@ -433,7 +462,8 @@ def init_db_schema(conn) -> None:
         print(f"Notice: Auto-seed skipped ({e})")
 
 
-_db_initialized = False
+_turso_initialized = False
+_sqlite_initialized = False
 
 
 def get_db_connection():
@@ -441,9 +471,9 @@ def get_db_connection():
     
     If TURSO_DATABASE_URL and TURSO_AUTH_TOKEN are set, connects to Turso Cloud LibSQL
     via pure synchronous HTTP pipeline for 100% permanent cloud persistence across serverless cold starts.
-    If Turso is not configured or encounters network errors, seamlessly falls back to local SQLite.
+    If Turso is not configured or encounters network/credential errors, seamlessly falls back to local SQLite.
     """
-    global _db_initialized
+    global _turso_initialized, _sqlite_initialized
 
     turso_url = os.environ.get("TURSO_DATABASE_URL", "").strip()
     turso_token = os.environ.get("TURSO_AUTH_TOKEN", "").strip()
@@ -452,37 +482,61 @@ def get_db_connection():
         try:
             client = PureTursoHttpClient(turso_url, turso_token)
             conn = TursoConnection(client)
-            if not _db_initialized:
-                conn.execute("SELECT 1;")
+            if not _turso_initialized:
                 init_db_schema(conn)
-                _db_initialized = True
+                _turso_initialized = True
+            else:
+                conn.execute("SELECT 1;")
             return conn
         except Exception as e:
             print(f"Notice: Turso Cloud DB connection notice ({e}); using local SQLite fallback.")
 
     # Local SQLite fallback
     ensure_directories()
-    if not _db_initialized or not DB_PATH.exists():
-        init_db()
+    if not _sqlite_initialized or not DB_PATH.exists():
+        init_sqlite_db()
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
 
 
-def init_db() -> None:
+def init_sqlite_db() -> None:
     """Initialize local SQLite database tables if they do not exist."""
-    global _db_initialized
-    ensure_directories()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON;")
+    global _sqlite_initialized
     try:
-        with conn:
+        ensure_directories()
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON;")
+        try:
+            with conn:
+                init_db_schema(conn)
+            _sqlite_initialized = True
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f"Notice: SQLite init notice: {e}")
+
+
+def init_db() -> None:
+    """Initialize database tables for Turso (if configured) and local SQLite fallback."""
+    global _turso_initialized, _sqlite_initialized
+
+    turso_url = os.environ.get("TURSO_DATABASE_URL", "").strip()
+    turso_token = os.environ.get("TURSO_AUTH_TOKEN", "").strip()
+
+    if turso_url and turso_token:
+        try:
+            client = PureTursoHttpClient(turso_url, turso_token)
+            conn = TursoConnection(client)
             init_db_schema(conn)
-        _db_initialized = True
-    finally:
-        conn.close()
+            _turso_initialized = True
+            print("Successfully initialized Turso Cloud database schema.")
+        except Exception as e:
+            print(f"Notice: Turso Cloud DB startup init notice ({e}); will retry or fall back.")
+
+    init_sqlite_db()
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ from contextlib import asynccontextmanager
 
 from pydantic import BaseModel
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, status, Query
+from fastapi import FastAPI, HTTPException, UploadFile, File, status, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -1893,3 +1893,31 @@ def download_material_file(material_id: int):
         raise HTTPException(status_code=404, detail="File content not found.")
     finally:
         conn.close()
+
+
+@app.get("/api/debug-error")
+def debug_error():
+    import traceback
+    import os
+    res = {
+        "turso_url_set": bool(os.environ.get("TURSO_DATABASE_URL")),
+        "turso_token_set": bool(os.environ.get("TURSO_AUTH_TOKEN")),
+        "is_serverless": bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME")),
+    }
+    try:
+        conn = get_db_connection()
+        res["connection_type"] = type(conn).__name__
+        cur = conn.cursor()
+        cur.execute("SELECT 1 AS ok;")
+        row = cur.fetchone()
+        res["query_ok"] = True
+        res["row"] = dict(row) if hasattr(row, "keys") else str(row)
+        
+        cur.execute("SELECT COUNT(*) AS cnt FROM subjects;")
+        sub_row = cur.fetchone()
+        res["subjects_count"] = sub_row["cnt"] if sub_row else 0
+        conn.close()
+    except Exception as e:
+        res["error"] = str(e)
+        res["traceback"] = traceback.format_exc()
+    return res
